@@ -1,8 +1,8 @@
-# YuTong 雨桐 — 商业级全栈技术底座 [T]
+# YuTong 雨桐 — 商业级全栈技术底座 [v1.0 GA]
 
 > Java 25 · Spring Boot 4.0 · PostgreSQL 18 · Vue 3.5 · Uniapp · AI
 
-通用开发平台 + 完整样例工程 + 常见中间件集成 + 低代码快速开发能力。设计文档见 [YuTong-Java-Docs](./YuTong-Java-Docs/00-设计文档总览.md)。
+通用开发平台 + 完整样例工程 + 常见中间件集成 + 低代码快速开发能力。
 
 ## 目录结构
 
