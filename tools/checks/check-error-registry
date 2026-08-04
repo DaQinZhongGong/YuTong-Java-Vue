@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+# Error code registry consistency check
+# Design: 48-错误码注册表与API契约详设, 99-CI流水线与发布证据自动化详设
+# Validates consistency between Java ErrorCode enum and contracts/registries/errors.yaml:
+#   1. Every ErrorCode enum entry must exist in errors.yaml
+#   2. httpStatus must match
+#   3. messageKey must match
+#   4. No duplicate codes in ErrorCode.java
+#   5. Scan Java source for hardcoded error code strings not registered in errors.yaml
+# Usage: bash tools/checks/check-error-registry
+# Output: build/reports/checks/error-registry.json
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+ERRORS_YAML="$PROJECT_ROOT/YuTong-Java-Docs/contracts/registries/errors.yaml"
+ERRORCODE_JAVA="$PROJECT_ROOT/backend/yutong-common/src/main/java/com/yutong/common/errorcode/ErrorCode.java"
+REPORT_DIR="$PROJECT_ROOT/build/reports/checks"
+REPORT_FILE="$REPORT_DIR/error-registry.json"
+
+if [ ! -f "$ERRORS_YAML" ]; then
+  echo "ERROR: errors.yaml not found at $ERRORS_YAML"
+  exit 1
+fi
+if [ ! -f "$ERRORCODE_JAVA" ]; then
+  echo "ERROR: ErrorCode.java not found at $ERRORCODE_JAVA"
+  exit 1
+fi
+
+mkdir -p "$REPORT_DIR"
+
+errors=0
+warnings=0
+violations=""
+yaml_entries=""
+java_entries=""
+hardcoded_refs=""
+
+# --- 1. Parse errors.yaml: extract code, http, messageKey ---
+# Each entry looks like: - {code: SYS-400001, module: SYS, http: 400, messageKey: common.validation.invalid, ...}
+while IFS= read -r line; do
+  code=$(echo "$line" | grep -oE 'code:\s*[A-Z]+-[0-9]+' | awk '{print $2}' || true)
+  http=$(echo "$line" | grep -oE 'http:\s*[0-9]+' | awk '{print $2}' || true)
+  mkey=$(echo "$line" | grep -oE 'messageKey:\s*[^,}]+' | sed 's/messageKey:\s*//' | xargs || true)
+  if [ -n "$code" ]; then
+    yaml_entries="$yaml_entries$code|$http|$mkey"$'\n'
+  fi
+done < <(grep -E '^\s*-\s*\{code:' "$ERRORS_YAML")
+
+# --- 2. Parse ErrorCode.java: extract enum name, code, httpStatus, messageKey ---
+# Each enum looks like: NAME("CODE", HTTP, "messageKey"),
+while IFS= read -r line; do
+  # Match lines like:   ENUM_NAME("MODULE-000000", 400, "some.key"),
+  if echo "$line" | grep -qE '^\s+[A-Z_]+\("[A-Z]+-[0-9]+"'; then
+    enum_name=$(echo "$line" | grep -oE '^\s+[A-Z_]+' | xargs || true)
+    code=$(echo "$line" | grep -oE '"[A-Z]+-[0-9]+"' | tr -d '"' || true)
+    http=$(echo "$line" | grep -oE ',\s*[0-9]+\s*,' | tr -d ', ' || true)
+    mkey=$(echo "$line" | grep -oE '"[^"]+"' | sed -n '2p' | tr -d '"' || true)
+    if [ -n "$code" ]; then
+      java_entries="$java_entries$enum_name|$code|$http|$mkey"$'\n'
+    fi
+  fi
+done < "$ERRORCODE_JAVA"
+
+# --- 3. Check for duplicate codes in ErrorCode.java ---
+dup_codes=$(echo "$java_entries" | awk -F'|' '{print $2}' | sort | uniq -d || true)
+if [ -n "$dup_codes" ]; then
+  while IFS= read -r dup; do
+    [ -z "$dup" ] && continue
+    violations="$violations{\"type\":\"DUPLICATE_CODE\",\"code\":\"$dup\",\"message\":\"Duplicate error code in ErrorCode.java\"},"
+    echo "VIOLATION: Duplicate code $dup in ErrorCode.java"
+    errors=$((errors + 1))
+  done <<< "$dup_codes"
+fi
+
+# --- 4. Validate each Java enum against errors.yaml ---
+while IFS='|' read -r enum_name code java_http java_mkey; do
+  [ -z "$code" ] && continue
+  # Find matching yaml entry
+  yaml_match=$(echo "$yaml_entries" | grep -E "^${code}\|" || true)
+  if [ -z "$yaml_match" ]; then
+    violations="$violations{\"type\":\"MISSING_IN_REGISTRY\",\"enum\":\"$enum_name\",\"code\":\"$code\",\"message\":\"Error code exists in ErrorCode.java but not in errors.yaml registry\"},"
+    echo "VIOLATION: $enum_name ($code) exists in ErrorCode.java but not in errors.yaml registry"
+    errors=$((errors + 1))
+    continue
+  fi
+  yaml_http=$(echo "$yaml_match" | awk -F'|' '{print $2}')
+  yaml_mkey=$(echo "$yaml_match" | awk -F'|' '{print $3}')
+  if [ "$java_http" != "$yaml_http" ]; then
+    violations="$violations{\"type\":\"HTTP_MISMATCH\",\"enum\":\"$enum_name\",\"code\":\"$code\",\"javaHttp\":$java_http,\"yamlHttp\":$yaml_http,\"message\":\"HTTP status mismatch\"},"
+    echo "VIOLATION: $enum_name ($code) HTTP status mismatch: Java=$java_http, YAML=$yaml_http"
+    errors=$((errors + 1))
+  fi
+  if [ "$java_mkey" != "$yaml_mkey" ]; then
+    violations="$violations{\"type\":\"MESSAGEKEY_MISMATCH\",\"enum\":\"$enum_name\",\"code\":\"$code\",\"javaKey\":\"$java_mkey\",\"yamlKey\":\"$yaml_mkey\",\"message\":\"messageKey mismatch\"},"
+    echo "VIOLATION: $enum_name ($code) messageKey mismatch: Java=$java_mkey, YAML=$yaml_mkey"
+    errors=$((errors + 1))
+  fi
+done <<< "$java_entries"
+
+# --- 5. Scan Java source for hardcoded error code strings not in errors.yaml ---
+# Look for patterns like "BIZ-404001" or "AUTH-403001" in .java files
+yaml_codes_list=$(echo "$yaml_entries" | awk -F'|' '{print $1}' | sort -u)
+while IFS= read -r file; do
+  [ -z "$file" ] && continue
+  # Find quoted error code strings
+  matches=$(grep -noE '"[A-Z]{2,5}-[0-9]{6}"' "$file" 2>/dev/null || true)
+  while IFS= read -r match; do
+    [ -z "$match" ] && continue
+    lineno=$(echo "$match" | cut -d: -f1)
+    ref_code=$(echo "$match" | cut -d: -f2 | tr -d '"')
+    # Check if this code is in the registry
+    if ! echo "$yaml_codes_list" | grep -qx "$ref_code"; then
+      rel_path=$(echo "$file" | sed "s|$PROJECT_ROOT/||")
+      hardcoded_refs="$hardcoded_refs{\"file\":\"$rel_path\",\"line\":$lineno,\"code\":\"$ref_code\"},"
+      echo "WARNING: Hardcoded error code $ref_code at $rel_path:$lineno not found in errors.yaml registry"
+      warnings=$((warnings + 1))
+    fi
+  done <<< "$matches"
+done < <(find "$PROJECT_ROOT/backend" -name "*.java" -not -path "*/target/*" 2>/dev/null || true)
+
+# --- 6. Generate JSON report ---
+# Trim trailing commas
+violations=${violations%,}
+hardcoded_refs=${hardcoded_refs%,}
+
+yaml_count=$(echo "$yaml_entries" | grep -c '.' || true)
+java_count=$(echo "$java_entries" | grep -c '.' || true)
+
+cat > "$REPORT_FILE" <<EOF
+{
+  "check": "error-registry",
+  "status": "$([ "$errors" -eq 0 ] && echo "PASSED" || echo "FAILED")",
+  "errors": $errors,
+  "warnings": $warnings,
+  "summary": {
+    "yamlRegistryCount": $yaml_count,
+    "javaEnumCount": $java_count,
+    "violations": [$violations],
+    "hardcodedRefs": [$hardcoded_refs]
+  },
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+}
+EOF
+
+echo ""
+echo "Report saved to: $REPORT_FILE"
+if [ "$errors" -gt 0 ]; then
+  echo "FAILED: Found $errors error registry violation(s), $warnings warning(s)."
+  exit 1
+fi
+
+echo "PASSED: Error registry consistency verified ($yaml_count yaml entries, $java_count java enums, $warnings warning(s))."
+exit 0

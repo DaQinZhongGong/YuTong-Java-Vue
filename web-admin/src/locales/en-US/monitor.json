@@ -1,0 +1,10 @@
+{
+    "monitor.cache.field.checkedTime":  "Checked at",
+    "monitor.health.page.title":  "System health",
+    "monitor.health.field.status":  "Overall status",
+    "monitor.health.field.runMode":  "Run mode",
+    "monitor.cache.page.title":  "Cache monitoring",
+    "monitor.cache.field.caches":  "Caches",
+    "monitor.cache.action.clear":  "Clear cache",
+    "monitor.health.field.components":  "Components"
+}

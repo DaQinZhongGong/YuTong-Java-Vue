@@ -1,0 +1,19 @@
+{
+  "name": "yutong-platform",
+  "version": "0.2.0",
+  "private": true,
+  "description": "YuTong 雨桐 - 商业级全栈技术底座 (Java + Vue3 + PostgreSQL + Uniapp + AI)",
+  "engines": {
+    "node": ">=24",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "dev:web": "pnpm -C web-admin dev",
+    "build:web": "pnpm -C web-admin build",
+    "dev:mobile": "pnpm -C mobile-uniapp dev:h5",
+    "lint": "pnpm -r --parallel run lint",
+    "typecheck": "pnpm -r --parallel run typecheck",
+    "checks": "pnpm -C web-admin run lint && pnpm -C mobile-uniapp run lint"
+  },
+  "packageManager": "pnpm@11.10.0"
+}

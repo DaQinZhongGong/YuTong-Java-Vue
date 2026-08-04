@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# Check document catalog completeness
+# Design: 99-CI流水线与发布证据自动化详设 (check-document-catalog)
+# Verifies all design docs referenced in WBS exist under YuTong-Java-Docs/
+# Usage: bash tools/checks/check-document-catalog
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+DOCS_DIR="$PROJECT_ROOT/YuTong-Java-Docs"
+
+if [ ! -d "$DOCS_DIR" ]; then
+  echo "ERROR: Docs directory not found: $DOCS_DIR"
+  exit 1
+fi
+
+errors=0
+
+# Required design docs by ID (from 61-WBS input references)
+# Format: "docId|name"
+required_docs=(
+  "03|yutong-boot-application-design"
+  "05|data-architecture-design"
+  "07|source-code-directory-design"
+  "08|api-contract-design"
+  "09|java-backend-design"
+  "12|middleware-integration-design"
+  "13|ai-capability-design"
+  "14|lowcode-platform-design"
+  "15|permission-access-boundary-design"
+  "17|system-management-design"
+  "18|sample-business-detail-design"
+  "20|devops-deployment-design"
+  "21|security-quality-design"
+  "23|design-to-implementation-tracking"
+  "27|openapi-frontend-type-generation"
+  "29|coding-convention"
+  "33|ops-sla-disaster-recovery-design"
+  "41|bpmn-designer-design"
+  "42|report-dashboard-designer-design"
+  "44|message-export-task-design"
+  "45|plugin-market-design"
+  "46|multi-datasource-management-design"
+  "47|prototype-interaction-design"
+  "48|error-code-design"
+  "50|frontend-architecture-design"
+  "51|database-migration-baseline"
+  "52|common-coding-convention"
+  "53|web-admin-frontend-design"
+  "54|mobile-uniapp-design"
+  "55|openapi-design"
+  "56|state-machine-and-flow-design"
+  "57|ddl-baseline-design"
+  "58|sample-business-implementation-detail"
+  "59|test-matrix-acceptance-case"
+  "61|wbs-schedule-baseline"
+  "62|observability-metrics-logging-trace-detail"
+  "65|lowcode-codegen-template-detail"
+  "73|supply-chain-security-sbom-detail"
+  "87|acceptance-evidence-spec"
+  "99|ci-pipeline-release-evidence-automation"
+)
+
+for entry in "${required_docs[@]}"; do
+  doc_id="${entry%%|*}"
+  doc_name="${entry##*|}"
+  # Match by prefix NN-* (number prefix)
+  found=$(find "$DOCS_DIR" -maxdepth 1 -type d -name "${doc_id}-*" 2>/dev/null | head -1)
+  if [ -z "$found" ]; then
+    echo "VIOLATION: Missing design doc ${doc_id}-${doc_name}"
+    errors=$((errors + 1))
+  fi
+done
+
+if [ "$errors" -gt 0 ]; then
+  echo ""
+  echo "FAILED: Found $errors missing design doc(s)."
+  exit 1
+fi
+
+echo "PASSED: All ${#required_docs[@]} required design docs present."
+exit 0

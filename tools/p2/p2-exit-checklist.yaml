@@ -1,0 +1,74 @@
+# P2 阶段退出条件机器可读定义
+# 来源：YuTong-Java-Docs/85-P2每日推进节奏与会议机制/85-P2每日推进节奏与会议机制.md
+# 用途：被 tools/p2/check-p2-exit.sh 引用，自动化校验 P2 阶段是否可退出到 v0.3。
+
+schemaVersion: '1.0.0'
+artifactId: yutong-p2-exit-checklist
+basedOn: docs/85-P2每日推进节奏与会议机制/85-P2每日推进节奏与会议机制.md
+
+# 退出条件 5 项，按 85 号文档定义
+exitConditions:
+  - code: EXIT-01
+    name: P0 问题清零
+    requirement: 0 个 P0 阻塞
+    checkMethod: count_open_problems
+    checkTarget: contracts/governance/problem-remediation-list.yaml
+    severityPolicy: P0
+    expectedValue: 0
+    blocksExit: true
+  - code: EXIT-02
+    name: P1 问题有责任人和截止日期
+    requirement: 所有 P1 问题必须有责任人和截止日期，未关闭的有排期
+    checkMethod: inspect_p1_fields
+    checkTarget: contracts/governance/problem-remediation-list.yaml
+    requiredFields:
+      - owner
+      - dueDate
+    blocksExit: true
+  - code: EXIT-03
+    name: D1~D8 关键证据齐全
+    requirement: P2 阶段 D1~D8 每日关键证据归档完整
+    checkMethod: check_evidence_paths
+    checkTarget: release-evidence/v0.2.0/
+    expectedArtifacts:
+      - smoke-test.txt
+      - quality-baseline.txt
+      - acceptance-summary.md
+    blocksExit: true
+  - code: EXIT-04
+    name: 文档状态同步
+    requirement: 23/39/75/80 状态与 P2 实际进度同步
+    checkMethod: check_doc_status_synced
+    checkTarget: YuTong-Java-Docs/23-设计到落地追踪记录/23-设计到落地追踪记录.md
+    requiredDocs:
+      - '23-设计到落地追踪记录'
+      - '39-实现基线冻结与开工准入检查'
+      - '75-v0.2工程初始化任务书'
+      - '80-v0.2工程初始化执行清单'
+    blocksExit: true
+  - code: EXIT-05
+    name: 基础检查命令可运行
+    requirement: tools/checks 下 6 项 P2 检查脚本均可运行且通过
+    checkMethod: run_p2_gate
+    checkTarget: tools/checks/
+    requiredScripts:
+      - check-document-catalog
+      - check-dir-layout
+      - check-id-policy
+      - check-env-vars
+      - check-secrets.sh
+      - check-openapi-diff.sh
+    blocksExit: true
+
+# 退出结论枚举
+exitConclusionEnum:
+  - PASS                # 5 项全过，可进入 v0.3
+  - CONDITIONAL_PASS    # 有 P1 未关闭但有排期，可进入 v0.3 并继续整改
+  - FAIL                # 有 P0 或 EXIT 阻塞，继续 v0.2 整改
+
+# 复核记录
+reviewRecord:
+  lastReviewedAt: null
+  lastReviewer: null
+  lastConclusion: null
+  notes: 'P2 阶段尚未正式启动，本清单为机器可读骨架，待 P2 启动后填充复核记录'

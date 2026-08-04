@@ -1,0 +1,166 @@
+{
+  "pages": [
+    {
+      "path": "pages/workbench/workbench",
+      "aliasPath": "pages/workbench/index",
+      "style": {
+        "navigationBarTitleText": "工作台"
+      }
+    },
+    {
+      "path": "pages/login/login",
+      "aliasPath": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/todo/todo",
+      "aliasPath": "pages/todo/list",
+      "style": {
+        "navigationBarTitleText": "待办"
+      }
+    },
+    {
+      "path": "pages/mine/mine",
+      "aliasPath": "pages/mine/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    },
+    {
+      "path": "pages/mine/uploadQueue",
+      "aliasPath": "pages/upload/index",
+      "style": {
+        "navigationBarTitleText": "上传队列"
+      }
+    }
+  ],
+  "subPackages": [
+    {
+      "root": "pages/biz",
+      "pages": [
+        {
+          "path": "detail",
+          "style": {
+            "navigationBarTitleText": "申请单详情"
+          }
+        },
+        {
+          "path": "handle",
+          "style": {
+            "navigationBarTitleText": "审核处理"
+          }
+        }
+      ]
+    },
+    {
+      "root": "pages/message",
+      "pages": [
+        {
+          "path": "list",
+          "style": {
+            "navigationBarTitleText": "消息中心"
+          }
+        }
+      ]
+    },
+    {
+      "root": "pages/scan",
+      "pages": [
+        {
+          "path": "index",
+          "style": {
+            "navigationBarTitleText": "扫码"
+          }
+        }
+      ]
+    },
+    {
+      "root": "pages/survey",
+      "pages": [
+        {
+          "path": "list",
+          "style": {
+            "navigationBarTitleText": "问卷列表",
+            "enablePullDownRefresh": true
+          }
+        },
+        {
+          "path": "fill",
+          "style": {
+            "navigationBarTitleText": "问卷填写"
+          }
+        },
+        {
+          "path": "done",
+          "style": {
+            "navigationBarTitleText": "提交成功"
+          }
+        }
+      ]
+    },
+    {
+      "root": "pages/contracts",
+      "pages": [
+        {
+          "path": "list",
+          "style": {
+            "navigationBarTitleText": "合同档案",
+            "enablePullDownRefresh": true
+          }
+        }
+      ]
+    },
+    {
+      "root": "pages/reports",
+      "pages": [
+        {
+          "path": "list",
+          "style": {
+            "navigationBarTitleText": "报表分析",
+            "enablePullDownRefresh": true
+          }
+        }
+      ]
+    },
+    {
+      "root": "pages/plugins",
+      "pages": [
+        {
+          "path": "index",
+          "style": {
+            "navigationBarTitleText": "插件市场",
+            "enablePullDownRefresh": true
+          }
+        }
+      ]
+    }
+  ],
+  "tabBar": {
+    "color": "#909399",
+    "selectedColor": "#3c8772",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/workbench/workbench",
+        "text": "工作台"
+      },
+      {
+        "pagePath": "pages/todo/todo",
+        "text": "待办"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "YuTong",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#f5f7fa"
+  }
+}

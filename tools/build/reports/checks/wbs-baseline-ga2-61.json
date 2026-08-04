@@ -1,0 +1,13 @@
+{
+    "results":  [
+
+                ],
+    "designDoc":  "61-实现任务WBS与排期基线",
+    "warnCount":  4,
+    "passCount":  1,
+    "taskId":  "GA2-61",
+    "generatedAt":  "2026-07-21T07:44:11.5434206Z",
+    "failCount":  15,
+    "status":  "FAIL",
+    "schemaVersion":  "1.0.0"
+}

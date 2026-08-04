@@ -1,0 +1,194 @@
+# AI 上下文装载清单机器可读模板
+# 来源：YuTong-Java-Docs/90-AI实现总控与上下文编排规范/90-AI实现总控与上下文编排规范.md
+# 用途：AI 每次执行实现任务前必须填写本清单的实例，作为 task 说明或 commit 说明的一部分。
+#   强约束（90 号"上下文装载必须记录本次使用的 docId、契约路径和 manifest hash"）
+
+schemaVersion: '1.0.0'
+artifactId: yutong-ai-context-manifest
+basedOn: docs/90-AI实现总控与上下文编排规范/90-AI实现总控与上下文编排规范.md
+
+# === 任务基本信息 ===
+task:
+  taskId: ''                # 必填，格式 P{阶段}-{领域}-{序号}，如 P2-BACKEND-001
+  objective: ''             # 必填，一句话可验收输出
+  phase: ''                 # 必填，对应 ai-implementation-phases.yaml 的 phase.code，如 P2-1
+  owner: ''                 # 必填，执行人
+  createdAt: ''             # 必填，ISO8601，如 '2026-07-16T10:00:00Z'
+
+# === 全局上下文（90 号"全局上下文"）===
+# 任意实现任务都必须装载 contractBootstrap + readingTracks.agent-bootstrap
+globalContext:
+  contractBootstrap:
+    - contracts/document-catalog.yaml
+    - contracts/design-manifest.json
+    - contracts/product-baseline.yaml
+    - contracts/technology-baseline.yaml
+  readingTracks:
+    agent-bootstrap: true   # 必填 true，按 document-catalog.yaml 的 readingTracks.agent-bootstrap 装载
+
+# === 本次任务实际使用的 docId 清单 ===
+# 列出本次任务实际读取的设计文档 ID（来自 90 号"AI 上下文读取分层"）
+usedDocIds: []
+  # 示例：
+  # - '18-样例业务详细设计'
+  # - '52-后端服务分工与接口实现详设'
+  # - '58-后端API逐接口任务清单'
+
+# === 本次任务实际使用的契约路径 ===
+usedContractPaths: []
+  # 示例：
+  # - contracts/openapi/openapi.yaml
+  # - contracts/asyncapi/asyncapi.yaml
+  # - contracts/registries/routes.yaml
+  # - contracts/registries/operation-policies.yaml
+  # - contracts/registries/permissions.yaml
+  # - contracts/registries/statuses.yaml
+  # - contracts/registries/events.yaml
+  # - contracts/registries/feature-flags.yaml
+  # - contracts/registries/errors.yaml
+  # - contracts/registries/i18n-catalog.yaml
+  # - contracts/data-model.yaml
+  # - contracts/page-field-map.yaml
+
+# === 本次任务 manifest 锚定 ===
+# 90 号强约束："上下文装载必须记录本次使用的 docId、契约路径和 manifest hash"
+manifestAnchor:
+  manifestPath: 'YuTong-Java-Docs/contracts/design-manifest.json'
+  contentSetSha256: ''     # 必填，从 design-manifest.json 的 contentSetSha256 字段读取
+  schemaVersion: ''        # 必填，从 design-manifest.json 的 schemaVersion 字段读取
+  fileCount: 0             # 必填，从 design-manifest.json 的 files 数组长度读取
+  manifestLoadedAt: ''     # 必填，本次装载时间 ISO8601
+
+# === 领域上下文（按任务类型选填）===
+# 90 号"后端实现上下文" / "数据库实现上下文" / "Web 管理端实现上下文" / "移动端实现上下文" / "低代码与 AI 实现上下文" / "运维、质量与发布上下文"
+domainContext:
+  backend:
+    enabled: false
+    taskType: ''           # 后端骨架 / 通用能力 / 样例业务 / 中间件 / 数据权限审计
+    requiredDocs: []
+  database:
+    enabled: false
+    taskType: ''           # 迁移骨架 / 种子数据 / 数据检查
+    requiredDocs: []
+  web:
+    enabled: false
+    taskType: ''           # Web 骨架 / 样例页面 / 低代码设计器 / AI 助手
+    requiredDocs: []
+  mobile:
+    enabled: false
+    taskType: ''           # 移动骨架 / 移动闭环 / 弱网与安全
+    requiredDocs: []
+  lowcodeAi:
+    enabled: false
+    taskType: ''           # 低代码元模型 / 代码生成 / AI Gateway / AI + 低代码协同
+    requiredDocs: []
+  ops:
+    enabled: false
+    taskType: ''           # 测试体系 / 可观测性 / 安全与供应链 / 发布验收 / 端侧体验验收 / 跨团队闭环验收
+    requiredDocs: []
+
+# === 商业级补强（90 号"商业级实现上下文补充"）===
+# AI/团队后续实现时必须把第六轮商业级补强内容作为强约束读取
+commercialGradeContext:
+  enabled: false
+  additionalRequiredDocs: []
+    # 示例：
+    # - '02-需求与范围设计'               # 任意需求拆分必读
+    # - '04-业务架构设计'                 # 样例业务实现必读
+    # - '18-样例业务详细设计'             # 样例业务实现必读
+    # - '19-页面原型与站点地图'           # UI/前端/移动必读
+    # - '50-设计系统与视觉规范详设'       # UI/前端/移动必读
+    # - '53-Web管理端页面级分工详设'      # UI/前端/移动必读
+    # - '54-Uniapp移动端页面级分工详设'   # UI/前端/移动必读
+    # - '56-UI逐屏线框与交互验收详设'     # UI/前端/移动必读
+    # - '66-前端组件API与状态管理详设'    # UI/前端/移动必读
+    # - '76-UI视觉走查与美感验收清单'     # UI/前端/移动必读
+    # - '91-Web基础后台逐页交互详设'      # Web/移动逐页与权限必读
+    # - '92-Uniapp移动端逐页交互详设'     # Web/移动逐页与权限必读
+    # - '93-前端页面组件装配清单详设'     # Web/移动逐页与权限必读
+    # - '96-端侧权限可见性矩阵详设'       # Web/移动逐页与权限必读
+    # - '94-端侧埋点与体验监控详设'       # 端侧体验监控与设计交付必读
+    # - '95-Figma设计交付任务包详设'      # 端侧体验监控与设计交付必读
+    # - '97-页面字段OpenAPI数据库Figma映射详设'  # 字段映射与后端骨架必读
+    # - '98-后端实现蓝图与代码骨架详设'   # 字段映射与后端骨架必读
+    # - '31-产品化与商业版本设计'         # 商业化能力必读
+    # - '38-竞品对标验收清单'             # 商业化能力必读
+    # - '40-设计全面复查与商用评估报告'   # 商业化能力必读
+    # - '70-商业授权与版本能力裁剪详设'   # 商业化能力必读
+    # - '79-首版发布验收包与证据归档详设' # 发布验收必读
+    # - '87-v0.2与v1.0验收报告模板'       # 发布验收必读
+    # - '99-CI流水线与发布证据自动化详设' # 发布验收必读
+
+# === 输出文件清单（与 ai-task-template.md 的"输出文件"字段一致）===
+outputFiles: []
+  # 示例：
+  # - path: backend/yutong-sample-service/.../BizRequestController.java
+  #   type: new  # new / modified / deleted
+  # - path: database/migrations/V009__add_biz_request_index.sql
+  #   type: new
+
+# === 禁止事项清单（引用 90 号"AI 禁止临时发挥清单"9 条）===
+prohibitions:
+  - id: PROH-01
+    name: 临时改技术栈
+    staticallyChecked: false
+    handling: 走 84 ADR 变更
+  - id: PROH-02
+    name: 局部使用 Long id / id: number / 自增主键
+    staticallyChecked: true
+    checkScript: tools/p2/ai-prohibition-check.sh
+    handling: 按 05/06/08/51 实现
+  - id: PROH-03
+    name: 页面直接约定后端字段
+    staticallyChecked: false
+    handling: 先改 08/55 或生成类型
+  - id: PROH-04
+    name: Controller 直接访问 Mapper
+    staticallyChecked: true
+    checkScript: tools/p2/ai-prohibition-check.sh
+    handling: 按 52 走 Application/Domain/Repository
+  - id: PROH-05
+    name: 低代码直接执行生产 DDL
+    staticallyChecked: false
+    handling: 只生成 Flyway 草稿和 diff
+  - id: PROH-06
+    name: AI 自动执行 SQL 或审批
+    staticallyChecked: false
+    handling: 只生成草稿，人工确认
+  - id: PROH-07
+    name: 为了跑通而关闭安全/审计
+    staticallyChecked: true
+    checkScript: tools/p2/ai-prohibition-check.sh
+    handling: 按 production/Mock 环境边界和 operation policy 落审计契约
+  - id: PROH-08
+    name: UI 脱离 Token 自定义样式
+    staticallyChecked: true
+    checkScript: tools/p2/ai-prohibition-check.sh
+    handling: 按 50/56/76 验收
+  - id: PROH-09
+    name: 不写测试或证据
+    staticallyChecked: false
+    handling: 按 59/79/87 归档
+
+# === 验证命令清单 ===
+verifyCommands: []
+  # 示例：
+  # - 'cd backend && ./mvnw -pl yutong-sample-service test -Dtest=BizRequestControllerTest'
+  # - 'curl -fsS http://localhost:8080/actuator/health'
+  # - 'ruby YuTong-Java-Docs/quality/check_docs.rb'
+
+# === 验收证据清单（按 90 号"每阶段最小验收证据"）===
+acceptanceEvidence: []
+  # 示例：
+  # - path: release-evidence/v0.2.0/backend-smoke-{{date}}.txt
+  #   type: 启动日志
+  # - path: release-evidence/v0.2.0/api-response-{{date}}.json
+  #   type: API 响应样例
+
+# === 偏差记录 ===
+deviation:
+  hasDeviation: false      # 必填
+  deviationId: ''          # 如有偏差，必填，如 DEV-2026-001
+  deviationType: ''        # 字段 / 接口 / 状态机 / 权限 / 错误码 / 目录 / 主键 / 其他
+  disposition: ''          # 改代码不改设计 / 走 84 ADR / 走 23 暂不改 / 走 23 + P1 整改
+  trackingRecordPath: ''   # YuTong-Java-Docs/23-设计到落地追踪记录/23-设计到落地追踪记录.md#偏差DEV-2026-XXX

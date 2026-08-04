@@ -1,0 +1,8 @@
+{
+    "error.forbidden.noPermission":  "你没有访问该页面的权限",
+    "error.forbidden.noPermissionWithRole":  "你没有访问该页面的权限 (当前角色: {role})",
+    "error.forbidden.backHome":  "返回首页",
+    "error.forbidden.reLogin":  "重新登录",
+    "error.notFound.message":  "抱歉,您访问的页面不存在",
+    "error.notFound.backHome":  "返回首页"
+}

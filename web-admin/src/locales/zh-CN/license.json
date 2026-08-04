@@ -1,0 +1,8 @@
+{
+    "license.error.fileInvalid": "License 文件不是合法 JSON 或格式不支持",
+    "license.error.fieldsMissing": "License 文件缺少必填字段 (licenseId/edition/subject/expireTime)",
+    "license.error.incompatible": "License schema 版本与运行平台不兼容",
+    "license.error.internal": "License 加载、校验或刷新发生内部错误",
+    "license.error.moduleDenied": "模块未授权或 License 已过期、吊销或无效",
+    "license.error.quotaExceeded": "当前周期授权额度已用尽"
+}

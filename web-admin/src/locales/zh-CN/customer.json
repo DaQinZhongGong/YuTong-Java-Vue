@@ -1,0 +1,20 @@
+{
+    "customer.list.customerName":  "客户名称",
+    "customer.list.searchPlaceholder":  "搜索客户名称",
+    "customer.list.addCustomer":  "新增客户",
+    "customer.list.customerCode":  "客户编码",
+    "customer.list.contactName":  "联系人",
+    "customer.list.phone":  "电话",
+    "customer.list.status":  "状态",
+    "customer.list.enabled":  "启用",
+    "customer.list.disabled":  "禁用",
+    "customer.list.action":  "操作",
+    "customer.list.editCustomer":  "编辑客户",
+    "customer.list.address":  "地址",
+    "customer.list.remark":  "备注",
+    "customer.msg.confirmDelete":  "确定删除客户 [{name}] 吗？",
+    "customer.msg.tip":  "提示",
+    "customer.msg.deleteSuccess":  "删除成功",
+    "customer.msg.updateSuccess":  "更新成功",
+    "customer.msg.createSuccess":  "创建成功"
+}

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.yutong</groupId>
+        <artifactId>yutong-parent</artifactId>
+        <version>0.2.0</version>
+    </parent>
+
+    <artifactId>yutong-lowcode-service</artifactId>
+    <name>YuTong Lowcode Service</name>
+    <description>低代码: 元模型、页面设计器、代码生成、diff 预览</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.yutong</groupId>
+            <artifactId>yutong-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yutong</groupId>
+            <artifactId>yutong-infra</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yutong</groupId>
+            <artifactId>yutong-auth-adapter</artifactId>
+        </dependency>
+        <!-- GA2-L173: LicenseService Facade 接口（70 号文档额度扣减规则接入） -->
+        <dependency>
+            <groupId>com.yutong</groupId>
+            <artifactId>yutong-api</artifactId>
+        </dependency>
+        <!-- GA2-L191: @Auditable 审计注解（com.yutong.system.log.auditable.Auditable），对齐 GA2-39 AI 模块依赖模式 -->
+        <dependency>
+            <groupId>com.yutong</groupId>
+            <artifactId>yutong-system-service</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- FreeMarker 模板引擎 (65-低代码代码生成模板详设) -->
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

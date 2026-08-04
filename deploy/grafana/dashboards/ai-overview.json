@@ -1,0 +1,65 @@
+{
+  "title": "YuTong AI Overview",
+  "tags": ["yutong", "ai"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "AI Request Rate (req/s)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "sum(rate(ai_request_total[1m]))", "legendFormat": "req/s" }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "AI Token Usage Total",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "targets": [
+        { "expr": "sum(ai_token_usage_total)", "legendFormat": "tokens" }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "AI Tool Calls Total",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "targets": [
+        { "expr": "sum(ai_tool_call_total)", "legendFormat": "calls" }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "AI Request Duration (P95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(ai_request_duration_seconds_bucket[5m])) by (le, scenario))", "legendFormat": "P95 {{scenario}}" }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "AI Requests by Scenario",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "targets": [
+        { "expr": "sum(rate(ai_request_total[5m])) by (scenario)", "legendFormat": "{{scenario}}" }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "AI Tool Calls by Tool",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "targets": [
+        { "expr": "sum(rate(ai_tool_call_total[5m])) by (toolName)", "legendFormat": "{{toolName}}" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+# 89 号剩余风险与封版条件机器可读定义
+# 设计来源: YuTong-Java-Docs/89-封版前深度验收报告/89-封版前深度验收报告.md "剩余风险与封版条件" 章节
+# 由 GA2-23-1 落地。本文件由 check-deep-acceptance.rb 校验。
+schemaVersion: '1.0.0'
+docId: '89'
+
+# 5 项剩余风险 (89 号文档 "剩余风险与封版条件" 章节)
+risks:
+  - id: 'RISK-89-001'
+    description: '设计文档已足够细,但实现阶段如果不按 23 追踪,仍可能文档与代码脱节'
+    level: '高'
+    handlingRequirement: 'P2 起必须维护设计到落地追踪和偏差记录'
+    handlingStatus: 'MITIGATED'  # GA2-22 已落地 23 追踪+偏差记录检查脚本
+    mitigationEvidence: 'GA2-21 check_deviation_sync.rb + GA2-22 ai-prohibition-check.sh + GA2-23 (本轮) 联合检查脚本'
+  - id: 'RISK-89-002'
+    description: 'boot/cloud 双形态容易被实现成两套逻辑'
+    level: '高'
+    handlingRequirement: '必须落实 Facade、本地 Bean/Feign 切换和模块边界代码评审'
+    handlingStatus: 'MITIGATED'
+    mitigationEvidence: 'GA2-19 yutong-api Facade 模块骨架 + LocalMessageFacade/LocalAuditFacade @Profile("!cloud") + 98 号后端实现蓝图已 Ready→Done'
+  - id: 'RISK-89-003'
+    description: '低代码与 AI 能力诱人,容易超出第一版边界'
+    level: '中'
+    handlingRequirement: '严格执行草稿、diff、人工确认、禁止直接写生产数据'
+    handlingStatus: 'MONITORED'
+    mitigationEvidence: '14/36/37/65 号文档已冻结边界 + 90 号 AI 实现总控禁止项检查 (GA2-22)'
+  - id: 'RISK-89-004'
+    description: 'UI 美感最终依赖设计稿和前端执行质量'
+    level: '中'
+    handlingRequirement: '必须按 50、56、76 做视觉验收,不允许只完成页面功能'
+    handlingStatus: 'OPEN'
+    mitigationEvidence: '76 号 UI 视觉走查 Ready 状态未落地 + GA2-22 ai-prohibition-check.sh 发现 122 处硬编码颜色 P1'
+  - id: 'RISK-89-005'
+    description: '设计到实现需要严格证据化'
+    level: '中'
+    handlingRequirement: 'v1.0 必须按 79 归档测试、性能、安全、运维、SBOM、Demo 和文档站证据,证明实现没有偏离设计'
+    handlingStatus: 'MITIGATED'
+    mitigationEvidence: 'GA2-20 99 号 CI 流水线 9 阶段 + Release 8 阶段 + release-manifest + provenance SLSA L1 + sign-off-package RACI 8 角色'
+
+# 风险等级枚举
+riskLevelEnum:
+  - '高'
+  - '中'
+  - '低'
+
+# 风险处理状态枚举
+riskStatusEnum:
+  - 'OPEN'        # 未处理
+  - 'MONITORED'   # 已监控,未完全闭环
+  - 'MITIGATED'   # 已缓解
+  - 'CLOSED'      # 已闭环
+
+# 封版前必须满足的条件 (89 号文档 "当前验收结论" 章节)
+sealingConditions:
+  - id: 'SEAL-001'
+    description: '74 G0 正式签署达到 SIGNED_PASS 或 SIGNED_CONDITIONAL_PASS'
+    status: 'PENDING'  # 当前 SELF_CHECK_PASSED (GA2-21 落地机器可读骨架)
+    blocking: true
+  - id: 'SEAL-002'
+    description: '归档 design-manifest.json hash 并固定 manifest'
+    status: 'DONE'  # GA2-21 已生成 124 文件, GA2-22 增至 130 文件 + --verify 通过
+    blocking: true
+  - id: 'SEAL-003'
+    description: '选择生产身份模式 (OIDC/SSO/LDAP_AD/CUSTOMER_IAM/LOCAL_IAM_EXTENSION)'
+    status: 'PENDING'  # C2/C3 商业环境遗留
+    blocking: true
+  - id: 'SEAL-004'
+    description: '选择 C2 或 C3 目标档位'
+    status: 'PENDING'  # C2/C3 商业环境遗留
+    blocking: true
+  - id: 'SEAL-005'
+    description: '89 封版前深度验收报告完成'
+    status: 'DONE'  # 89 号文档已存在 + GA2-23-1 机器化
+    blocking: true
+  - id: 'SEAL-006'
+    description: '90 AI 实现总控规范完成'
+    status: 'DONE'  # GA2-22 已落地
+    blocking: true
+  - id: 'SEAL-007'
+    description: '88 设计基线封版记录完成'
+    status: 'PENDING'  # 88 号文档已存在, GA2-23-2 机器化
+    blocking: false  # 88 号文档本身已存在, 机器化为 GA2-23-2 任务
+
+# 封版条件状态枚举
+conditionStatusEnum:
+  - 'PENDING'
+  - 'IN_PROGRESS'
+  - 'DONE'
+  - 'BLOCKED'

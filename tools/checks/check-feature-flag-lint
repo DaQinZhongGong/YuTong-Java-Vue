@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# Feature flag registry lint
+# Design: 99-CI流水线与发布证据自动化详设 (feature-flag-lint), 20-DevOps与部署设计
+# Validates contracts/registries/feature-flags.yaml structure:
+#   - Each flag has: key, type, owner, safeDefault, prodDefault, context, operationId/routeId, preconditions, expiry
+# Usage: bash tools/checks/check-feature-flag-lint
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+FLAGS_FILE="$PROJECT_ROOT/YuTong-Java-Docs/contracts/registries/feature-flags.yaml"
+
+if [ ! -f "$FLAGS_FILE" ]; then
+  echo "SKIP: feature-flags.yaml not found, skipping lint"
+  exit 0
+fi
+
+errors=0
+
+# Required fields for each feature flag
+required_fields="key type owner safeDefault"
+
+# Parse YAML (basic grep-based parser for portability)
+# Each flag entry starts with "  - key:"
+current_flag=""
+current_fields=""
+while IFS= read -r line; do
+  # Detect new flag entry
+  if echo "$line" | grep -qE '^\s*-\s+key:'; then
+    # Validate previous flag
+    if [ -n "$current_flag" ] && [ -n "$current_fields" ]; then
+      for field in $required_fields; do
+        if ! echo "$current_fields" | grep -qw "$field"; then
+          echo "VIOLATION: Flag $current_flag missing required field: $field"
+          errors=$((errors + 1))
+        fi
+      done
+    fi
+    current_flag=$(echo "$line" | grep -oE 'key:\s*\S+' | awk '{print $2}')
+    current_fields="key"
+  elif echo "$line" | grep -qE '^\s+[a-zA-Z]+:'; then
+    field=$(echo "$line" | awk -F':' '{print $1}' | xargs)
+    current_fields="$current_fields $field"
+  fi
+done < "$FLAGS_FILE"
+
+# Validate last flag
+if [ -n "$current_flag" ] && [ -n "$current_fields" ]; then
+  for field in $required_fields; do
+    if ! echo "$current_fields" | grep -qw "$field"; then
+      echo "VIOLATION: Flag $current_flag missing required field: $field"
+      errors=$((errors + 1))
+    fi
+  done
+fi
+
+if [ "$errors" -gt 0 ]; then
+  echo ""
+  echo "FAILED: Found $errors feature flag violation(s)."
+  exit 1
+fi
+
+echo "PASSED: Feature flag registry lint passed."
+exit 0

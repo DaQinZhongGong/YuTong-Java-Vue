@@ -1,0 +1,222 @@
+# AI 实现阶段顺序机器可读定义
+# 来源：YuTong-Java-Docs/90-AI实现总控与上下文编排规范/90-AI实现总控与上下文编排规范.md
+# 用途：被 tools/p2/ai-prohibition-check.sh 和任务追踪引用，定义 AI/团队实现的强制阶段顺序。
+
+schemaVersion: '1.0.0'
+artifactId: yutong-ai-implementation-phases
+basedOn: docs/90-AI实现总控与上下文编排规范/90-AI实现总控与上下文编排规范.md
+
+# 90 号"AI 实现阶段顺序"11 个阶段，严格按顺序执行
+phases:
+  - code: P2-0
+    name: 读取签署设计并建立任务追踪
+    prerequisites:
+      - '100-商业级产品定义与权威口径基线'
+      - 'contracts（openapi/asyncapi/registries/data-model）'
+      - '签署 manifest（contracts/design-manifest.json）'
+      - '00-设计文档总览'
+      - '23-设计到落地追踪记录'
+      - '88-设计基线封版记录'
+      - '90-AI实现总控与上下文编排规范'
+    acceptance:
+      - manifest hash 匹配
+      - 质量脚本 PASS
+      - '23 有本轮任务记录'
+    blocksNext: true
+  - code: P2-1
+    name: 落盘目录与工程骨架
+    prerequisites:
+      - '07-项目源代码目录层级详细设计'
+      - '75-v0.2工程初始化任务书'
+      - '80-v0.2工程初始化执行清单'
+      - '83-工程脚手架验收标准详设'
+      - '98-后端实现蓝图与代码骨架详设'
+    acceptance:
+      - '目录检查通过（tools/checks/check-dir-layout）'
+      - '后端/Web/移动可启动基础命令'
+      - '后端基础骨架符合蓝图'
+    blocksNext: true
+  - code: P2-2
+    name: 数据库与 OpenAPI 基线
+    prerequisites:
+      - '05-数据架构设计'
+      - '08-API契约设计'
+      - '26-数据库迁移与种子数据详细设计'
+      - '51-数据库物理模型与DDL详设'
+      - '55-OpenAPI接口Schema与Mock详设'
+      - '57-完整DDL清单与数据字典详设'
+    acceptance:
+      - 'Flyway 空库执行'
+      - 'OpenAPI 可生成类型'
+    blocksNext: true
+  - code: P2-3
+    name: 后端通用能力
+    prerequisites:
+      - '09-Java后端设计'
+      - '17-平台基础能力详细设计'
+      - '48-错误码注册表与API契约详设'
+      - '52-后端服务分工与接口实现详设'
+      - '67-数据权限与审计日志详设'
+    acceptance:
+      - '健康检查、字典、文件、统一异常、审计可用'
+    blocksNext: true
+  - code: P2-4
+    name: Web/移动基础框架
+    prerequisites:
+      - '10-Vue3管理端设计'
+      - '11-Uniapp移动端设计'
+      - '50-设计系统与视觉规范详设'
+      - '53-Web管理端页面级分工详设'
+      - '54-Uniapp移动端页面级分工详设'
+      - '66-前端组件API与状态管理详设'
+      - '91-Web基础后台逐页交互详设'
+      - '92-Uniapp移动端逐页交互详设'
+      - '93-前端页面组件装配清单详设'
+      - '94-端侧埋点与体验监控详设'
+      - '96-端侧权限可见性矩阵详设'
+      - '97-页面字段OpenAPI数据库Figma映射详设'
+    acceptance:
+      - '登录 Mock、布局、路由、API client、状态管理可用'
+      - '基础后台/移动逐页、权限态、字段映射和端侧埋点骨架可用'
+    blocksNext: true
+  - code: P3-1
+    name: 样例业务闭环
+    prerequisites:
+      - '18-样例业务详细设计'
+      - '52-后端服务分工与接口实现详设'
+      - '53-Web管理端页面级分工详设'
+      - '54-Uniapp移动端页面级分工详设'
+      - '55-OpenAPI接口Schema与Mock详设'
+      - '56-UI逐屏线框与交互验收详设'
+      - '57-完整DDL清单与数据字典详设'
+      - '58-后端API逐接口任务清单'
+      - '59-测试矩阵与验收用例详设'
+    acceptance:
+      - 'Web + 移动完成申请单主流程'
+      - '测试通过'
+    blocksNext: true
+  - code: P3-2
+    name: 低代码基础
+    prerequisites:
+      - '14-低代码平台设计'
+      - '36-低代码高级能力设计'
+      - '47-低代码设计器交互详设'
+      - '65-低代码代码生成模板详设'
+    acceptance:
+      - '元模型、页面预览、代码生成草稿可用'
+    blocksNext: true
+  - code: P3-3
+    name: AI 基础
+    prerequisites:
+      - '13-AI能力设计'
+      - '37-AI治理与评测设计'
+      - '64-安全威胁模型与风控详设'
+    acceptance:
+      - '文档问答、工具白名单、生成草稿、审计可用'
+    blocksNext: true
+  - code: P4
+    name: 工程化增强
+    prerequisites:
+      - '62-可观测性指标日志链路详设'
+      - '63-生产部署运维Runbook详设'
+      - '64-安全威胁模型与风控详设'
+      - '72-性能容量规划与压测方案详设'
+      - '73-供应链安全与SBOM详设'
+      - '99-CI流水线与发布证据自动化详设'
+    acceptance:
+      - '观测、Runbook、安全、压测、SBOM、Demo 证据和 CI 证据自动化'
+    blocksNext: true
+  - code: P5
+    name: v1.0 发布验收
+    prerequisites:
+      - '79-首版发布验收包与证据归档详设'
+      - '87-v0.2与v1.0验收报告模板'
+      - '99-CI流水线与发布证据自动化详设'
+    acceptance:
+      - '发布证据包、manifest、hash 和签署包完整'
+    blocksNext: false
+
+# AI 实现前封版条件（90 号"AI 实现前封版条件补充"）
+preImplementationGates:
+  - code: GATE-74
+    name: G0 签署
+    description: '74-G0正式评审记录与签署包 必须已签署（SIGNED_PASS 或 SIGNED_CONDITIONAL_PASS）'
+    checkTarget: contracts/governance/sign-off-package.yaml
+    requiredStatus: SIGNED_PASS or SIGNED_CONDITIONAL_PASS
+  - code: GATE-89
+    name: 封版前深度验收
+    description: '89-封版前深度验收报告 必须通过'
+    checkTarget: '89-封版前深度验收报告/89-封版前深度验收报告.md'
+  - code: GATE-90
+    name: AI 实现规范确认
+    description: '90-AI实现总控与上下文编排规范 必须明确上下文、顺序、禁止项和证据要求'
+    checkTarget: '90-AI实现总控与上下文编排规范/90-AI实现总控与上下文编排规范.md'
+  - code: GATE-23-P2
+    name: 23 建立 P2 任务追踪
+    description: '每个实现任务可追踪到设计文档'
+    checkTarget: '23-设计到落地追踪记录/23-设计到落地追踪记录.md'
+  - code: GATE-07
+    name: 07 目录落盘清单确认
+    description: '工程目录不再临时发挥'
+    checkTarget: '07-项目源代码目录层级详细设计/07-项目源代码目录层级详细设计.md'
+  - code: GATE-81-86
+    name: 81/86 检查命令准备
+    description: '初始化后可自动检查目录、ID、OpenAPI、Secret'
+    checkTarget: 'tools/checks/'
+  - code: GATE-91-96
+    name: 端侧交付基线确认
+    description: '91~96 端侧逐页/组件/Figma/埋点/权限矩阵基线确认'
+    checkTarget: '91-Web基础后台逐页交互详设 ~ 96-端侧权限可见性矩阵详设'
+  - code: GATE-97-99
+    name: 跨团队闭环基线确认
+    description: '97~99 字段映射/后端蓝图/CI 证据自动化基线确认'
+    checkTarget: '97-页面字段OpenAPI数据库Figma映射详设 ~ 99-CI流水线与发布证据自动化详设'
+
+# 每阶段最小验收证据（90 号"每阶段最小验收证据"）
+minimalEvidence:
+  P2 工程初始化:
+    - 启动日志
+    - 目录检查
+    - 依赖检查
+    - Flyway 空库执行
+    - OpenAPI 导出
+  后端通用能力:
+    - API 响应样例
+    - 错误码样例
+    - 审计日志
+    - 单元/集成测试
+  Web 管理端:
+    - 页面截图
+    - 路由表
+    - 组件状态
+    - API 类型生成记录
+  移动端:
+    - 分包配置
+    - 待办流程截图
+    - 上传重试演示
+  样例业务:
+    - E2E 流程
+    - 状态流转测试
+    - 导入导出结果
+    - 消息/任务日志
+  低代码:
+    - 元模型配置
+    - 生成 diff
+    - 输出文件清单
+    - 回滚记录
+  AI:
+    - RAG 来源引用
+    - 工具白名单拦截
+    - 成本日志
+    - 草稿确认记录
+  发布:
+    - '79 发布证据包'
+    - '87 验收报告'
+
+# 状态枚举
+phaseStatusEnum:
+  - NOT_STARTED
+  - IN_PROGRESS
+  - BLOCKED
+  - DONE
+  - SKIPPED  # 仅在 ADR 批准后允许

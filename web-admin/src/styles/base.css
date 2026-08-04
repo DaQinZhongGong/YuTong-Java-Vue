@@ -1,0 +1,284 @@
+/**
+ * YuTong 组件视觉规范全局样式
+ * 设计来源: 50-设计系统与视觉规范详设 (组件视觉规范 line 119-153 + 视觉品质规则 line 211-241)
+ *
+ * 覆盖: 页面布局骨架 / 表格 / 表单 / 状态标签 / 空错加载状态 / 动效反馈
+ * 原则: 企业后台默认使用细边框和轻阴影，不使用强投影 (50号文档 line 233)
+ */
+
+/* ===== 页面布局骨架 (50号文档 line 84-95) ===== */
+
+/* 页面头部: 标题 + 描述 + 主操作 */
+.yt-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--yt-space-md);
+  gap: var(--yt-space-md);
+}
+.yt-page-header__title {
+  font-size: var(--yt-font-size-title);
+  line-height: var(--yt-font-line-height-title);
+  font-weight: var(--yt-font-weight-bold);
+  color: var(--yt-text-primary);
+  margin: 0;
+}
+.yt-page-header__desc {
+  font-size: var(--yt-font-size-caption);
+  line-height: var(--yt-font-line-height-caption);
+  color: var(--yt-text-secondary);
+  margin-top: var(--yt-space-xs);
+}
+.yt-page-header__actions {
+  display: flex;
+  gap: var(--yt-space-sm);
+  flex-shrink: 0;
+}
+
+/* 过滤卡片 */
+.yt-filter-card {
+  background: var(--yt-bg-card);
+  border: 1px solid var(--yt-border-default);
+  border-radius: var(--yt-radius-md);
+  padding: var(--yt-space-md);
+  margin-bottom: var(--yt-space-md);
+  box-shadow: var(--yt-shadow-card);
+}
+
+/* 内容卡片 */
+.yt-content-card {
+  background: var(--yt-bg-card);
+  border: 1px solid var(--yt-border-default);
+  border-radius: var(--yt-radius-md);
+  padding: var(--yt-space-md);
+  box-shadow: var(--yt-shadow-card);
+}
+
+/* ===== 表格视觉规范 (50号文档 line 132-137) ===== */
+
+/* 表头背景 #F8FAFC, 文字 13px/600 */
+.el-table .el-table__header th.el-table__cell {
+  background-color: var(--yt-border-light);
+  font-size: var(--yt-font-size-table);
+  font-weight: var(--yt-font-weight-bold);
+  color: var(--yt-text-primary);
+}
+
+/* 行 hover 背景 #F1F5F9 (50号文档 line 134) */
+.el-table .el-table__row:hover > td.el-table__cell {
+  background-color: var(--yt-border-light) !important;
+}
+
+/* 表格正文 13px (50号文档 line 44) */
+.el-table {
+  font-size: var(--yt-font-size-table);
+}
+.el-table .el-table__cell {
+  padding: 8px 0;
+}
+
+/* ===== 状态标签视觉规范 (50号文档 line 136) ===== */
+/* StatusBadge: 不只依赖颜色, 配合文字/图标 (WCAG 1.4.1) */
+.yt-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--yt-space-xs);
+  padding: 2px var(--yt-space-sm);
+  border-radius: var(--yt-radius-sm);
+  font-size: var(--yt-font-size-caption);
+  font-weight: var(--yt-font-weight-bold);
+  line-height: var(--yt-font-line-height-caption);
+}
+.yt-status-badge::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.yt-status-badge--success {
+  background: rgba(22, 163, 74, 0.1);
+  color: var(--yt-color-success);
+}
+.yt-status-badge--success::before {
+  background: var(--yt-color-success);
+}
+.yt-status-badge--warning {
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--yt-color-warning);
+}
+.yt-status-badge--warning::before {
+  background: var(--yt-color-warning);
+}
+.yt-status-badge--danger {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--yt-color-danger);
+}
+.yt-status-badge--danger::before {
+  background: var(--yt-color-danger);
+}
+.yt-status-badge--info {
+  background: rgba(100, 116, 139, 0.1);
+  color: var(--yt-color-info);
+}
+.yt-status-badge--info::before {
+  background: var(--yt-color-info);
+}
+.yt-status-badge--primary {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--yt-color-primary);
+}
+.yt-status-badge--primary::before {
+  background: var(--yt-color-primary);
+}
+
+/* ===== 空错加载状态 (50号文档 line 146-153) ===== */
+
+/* 空状态: 插画 + 简短文案 + 可选主操作 */
+.yt-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--yt-space-xl) var(--yt-space-md);
+  gap: var(--yt-space-md);
+  color: var(--yt-text-secondary);
+}
+.yt-empty-state__icon {
+  font-size: 48px;
+  color: var(--yt-text-disabled);
+}
+.yt-empty-state__text {
+  font-size: var(--yt-font-size-body);
+  line-height: var(--yt-font-line-height-body);
+}
+.yt-empty-state__action {
+  margin-top: var(--yt-space-sm);
+}
+
+/* 错误状态: 错误摘要 + traceId + 重试按钮 (50号文档 line 152) */
+.yt-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--yt-space-xl) var(--yt-space-md);
+  gap: var(--yt-space-md);
+  text-align: center;
+}
+.yt-error-state__icon {
+  font-size: 48px;
+  color: var(--yt-color-danger);
+}
+.yt-error-state__message {
+  font-size: var(--yt-font-size-section);
+  font-weight: var(--yt-font-weight-bold);
+  color: var(--yt-text-primary);
+}
+.yt-error-state__trace {
+  font-size: var(--yt-font-size-caption);
+  color: var(--yt-text-disabled);
+  font-family: 'Courier New', monospace;
+}
+.yt-error-state__retry {
+  margin-top: var(--yt-space-sm);
+}
+
+/* 无权限状态: 锁图标 + 权限码 + 申请入口预留 (50号文档 line 153) */
+.yt-no-permission {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--yt-space-xl) var(--yt-space-md);
+  gap: var(--yt-space-sm);
+  color: var(--yt-text-secondary);
+}
+.yt-no-permission__icon {
+  font-size: 48px;
+  color: var(--yt-color-warning);
+}
+.yt-no-permission__code {
+  font-size: var(--yt-font-size-caption);
+  color: var(--yt-text-disabled);
+  font-family: 'Courier New', monospace;
+}
+
+/* ===== 动效反馈节奏 (50号文档 line 275-291) ===== */
+
+/* 抽屉打开: 从右侧滑入, 遮罩淡入 180~240ms */
+.el-drawer {
+  transition: transform var(--yt-transition-drawer) ease;
+}
+
+/* 弹窗打开: 淡入 + 轻微上浮 160~220ms */
+.el-dialog {
+  transition: transform var(--yt-transition-dialog) ease, opacity var(--yt-transition-dialog) ease;
+}
+
+/* 新增明细行高亮 1000~1500ms (50号文档 line 284 + 144) */
+@keyframes yt-row-highlight {
+  0% {
+    background-color: rgba(37, 99, 235, 0.12);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+.yt-row-highlight {
+  animation: yt-row-highlight var(--yt-transition-highlight) ease-out;
+}
+
+/* ===== 视觉品质规则 (50号文档 line 211-235) ===== */
+
+/* 卡片标题: 形成至少 3 级文字层级 (50号文档 line 216) */
+.yt-card-title {
+  font-size: var(--yt-font-size-section);
+  line-height: var(--yt-font-line-height-section);
+  font-weight: var(--yt-font-weight-bold);
+  color: var(--yt-text-primary);
+  margin: 0 0 var(--yt-space-sm) 0;
+}
+
+/* 指标卡: 数字、单位、同比、解释四层信息固定位置 (50号文档 line 178 + 195-197) */
+.yt-metric-card {
+  background: var(--yt-bg-card);
+  border: 1px solid var(--yt-border-default);
+  border-radius: var(--yt-radius-lg);
+  padding: var(--yt-space-md);
+  box-shadow: var(--yt-shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--yt-space-xs);
+}
+.yt-metric-card__value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--yt-text-primary);
+}
+.yt-metric-card__label {
+  font-size: var(--yt-font-size-caption);
+  color: var(--yt-text-secondary);
+}
+.yt-metric-card__trend {
+  font-size: var(--yt-font-size-caption);
+  display: flex;
+  align-items: center;
+  gap: var(--yt-space-xs);
+}
+.yt-metric-card__trend--up {
+  color: var(--yt-color-success);
+}
+.yt-metric-card__trend--down {
+  color: var(--yt-color-danger);
+}
+
+/* ===== 暗色模式组件适配 ===== */
+html.dark .el-table .el-table__header th.el-table__cell {
+  background-color: var(--yt-bg-card);
+}
+html.dark .el-table .el-table__row:hover > td.el-table__cell {
+  background-color: var(--yt-border-default) !important;
+}

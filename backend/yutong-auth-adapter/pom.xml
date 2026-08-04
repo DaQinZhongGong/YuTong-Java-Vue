@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.yutong</groupId>
+        <artifactId>yutong-parent</artifactId>
+        <version>0.2.0</version>
+    </parent>
+
+    <artifactId>yutong-auth-adapter</artifactId>
+    <name>YuTong Auth Adapter</name>
+    <description>权限接入边界: AuthContext、AuthAdapter、Mock 实现、OIDC/LDAP 适配、应急管理员、Refresh Token 轮换、登录日志</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.yutong</groupId>
+            <artifactId>yutong-common</artifactId>
+        </dependency>
+        <!-- GA2-V028: 引入 yutong-infra 提供 BaseEntity / MyBatis-Plus 支持生产身份增强表 -->
+        <dependency>
+            <groupId>com.yutong</groupId>
+            <artifactId>yutong-infra</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-spring-boot4-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+        <!-- 应急管理员 BCrypt 凭据单元测试 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

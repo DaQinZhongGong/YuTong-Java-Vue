@@ -1,0 +1,22 @@
+{
+    "login.title.app":  "YuTong 管理后台",
+    "login.subtitle.welcome":  "欢迎登录,请输入您的账号",
+    "login.field.username":  "用户名",
+    "login.field.password":  "密码",
+    "login.field.mockUserType":  "Mock 用户类型",
+    "login.placeholder.username":  "请输入用户名",
+    "login.placeholder.password":  "请输入密码",
+    "login.placeholder.mockUserType":  "选择 Mock 用户类型",
+    "login.aria.username":  "用户名",
+    "login.aria.password":  "密码",
+    "login.aria.mockUserType":  "Mock 用户类型 (仅开发模式)",
+    "login.action.submit":  "登 录",
+    "login.tip.devMode":  "开发模式: 通过上方选择器切换 4 类 Mock 用户验证权限矩阵。生产构建不显示本提示, 后端拒绝非 dev profile 启用 Mock。",
+    "login.msg.success":  "登录成功",
+    "login.rule.usernameRequired":  "请输入用户名",
+    "login.rule.passwordRequired": "请输入密码",
+    "login.desc.admin": "全部权限 + ALL 数据范围",
+    "login.desc.biz": "业务权限 + SELF 数据范围",
+    "login.desc.approver": "审批权限 + CUSTOM 数据范围",
+    "login.desc.viewer": "只读权限 + TENANT 数据范围 + 脱敏"
+}

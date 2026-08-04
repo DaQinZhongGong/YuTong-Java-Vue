@@ -1,0 +1,167 @@
+# 验收报告机器可读清单
+# 来源：YuTong-Java-Docs/87-v0.2与v1.0验收报告模板/87-v0.2与v1.0验收报告模板.md
+# 用途：被 tools/p2/check-acceptance-checklist.rb 引用，校验 v0.2/v1.0 验收报告实例是否覆盖 87 号文档定义的所有检查项。
+
+schemaVersion: '1.0.0'
+artifactId: yutong-acceptance-checklist
+basedOn: docs/87-v0.2与v1.0验收报告模板/87-v0.2与v1.0验收报告模板.md
+
+# 验收报告模板文件路径
+templates:
+  v0.2:
+    path: release-evidence/templates/v0.2-acceptance-report.md
+    instanceDir: release-evidence/v0.2.0/
+    instancePattern: 'acceptance-report-.*\.md$'
+  v1.0:
+    path: release-evidence/templates/v1.0-acceptance-report.md
+    instanceDir: release-evidence/v1.0.0/
+    instancePattern: 'acceptance-report.*\.md$'
+
+# v0.2 验收项 8 条
+v0_2_checks:
+  - code: ACC-V02-01
+    name: 仓库目录
+    standard: 与 `07` 一致
+    required: true
+  - code: ACC-V02-02
+    name: 后端启动
+    standard: health 可访问
+    required: true
+  - code: ACC-V02-03
+    name: Flyway 迁移
+    standard: 成功执行
+    required: true
+  - code: ACC-V02-04
+    name: Web 启动
+    standard: 登录/工作台可访问
+    required: true
+  - code: ACC-V02-05
+    name: 移动端启动
+    standard: H5 可访问
+    required: true
+  - code: ACC-V02-06
+    name: OpenAPI
+    standard: 可导出
+    required: true
+  - code: ACC-V02-07
+    name: 质量检查
+    standard: lint/typecheck/secret scan
+    required: true
+  - code: ACC-V02-08
+    name: 追踪回写
+    standard: '`23` 已更新'
+    required: true
+
+# v1.0 验收项 19 条
+v1_0_checks:
+  - code: ACC-V10-01
+    name: 样例业务闭环
+    standard: 创建到归档闭环完成
+    required: true
+  - code: ACC-V10-02
+    name: GA 范围与数量
+    standard: 31 路由/30 屏、94 operation、37 表、10 事件与签署契约一致
+    required: true
+  - code: ACC-V10-03
+    name: Web 核心页面
+    standard: 完整可用
+    required: true
+  - code: ACC-V10-04
+    name: 移动待办闭环
+    standard: 完整可用
+    required: true
+  - code: ACC-V10-05
+    name: 生产身份
+    standard: 已选择 OIDC/SSO/LDAP_AD/CUSTOMER_IAM/LOCAL_IAM_EXTENSION 之一并完成安全、生命周期和会话验收
+    required: true
+  - code: ACC-V10-06
+    name: 租户与 DataScope
+    standard: ALL/TENANT/DEPT_AND_CHILD/DEPT/SELF/CUSTOM/NONE 和字段脱敏用例通过
+    required: true
+  - code: ACC-V10-07
+    name: 低代码草稿链路
+    standard: 可生成、可预览、可审计
+    required: true
+  - code: ACC-V10-08
+    name: AI 问答链路
+    standard: 可问答、可引用、可审计；230 条固定评测全量通过发布阈值
+    required: true
+  - code: ACC-V10-09
+    name: 双语与无障碍
+    standard: 295 个必需 key 中英覆盖 100%；核心流程 WCAG 2.2 AA 门禁通过
+    required: true
+  - code: ACC-V10-10
+    name: C2/C3 档位
+    standard: 选择一个商业档位，拓扑、99.5%/99.9% 目标、RTO/RPO 和责任边界已签署
+    required: true
+  - code: ACC-V10-11
+    name: 性能压测
+    standard: 达到所选 C2/C3 容量档位
+    required: true
+  - code: ACC-V10-12
+    name: 安全扫描
+    standard: 依赖、镜像、密钥、基础漏洞均通过或有风险接受记录
+    required: true
+  - code: ACC-V10-13
+    name: 安全威胁模型验证
+    standard: TC-SEC-* 用例执行通过
+    required: true
+  - code: ACC-V10-14
+    name: SBOM
+    standard: 已归档
+    required: true
+  - code: ACC-V10-15
+    name: 运维回滚/恢复演练
+    standard: 回滚、备份恢复和客户通知/RCA 模板演练通过
+    required: true
+  - code: ACC-V10-16
+    name: 升级兼容
+    standard: 数据迁移、API 兼容、灰度、回滚和降级证据完整
+    required: true
+  - code: ACC-V10-17
+    name: 契约与清单
+    standard: 质量报告 PASS；OpenAPI diff 无未接受破坏；release/design manifest hash 可复算
+    required: true
+  - code: ACC-V10-18
+    name: 文档站
+    standard: 可访问
+    required: true
+  - code: ACC-V10-19
+    name: Demo 环境
+    standard: 可演示
+    required: true
+
+# 8 角色签署（v1.0 必须 8 类齐全；v0.2 可按实际范围）
+signOffRoles:
+  - 产品负责人
+  - 架构负责人
+  - 后端负责人
+  - 前端负责人
+  - 移动端负责人
+  - 测试负责人
+  - 运维负责人
+  - 安全负责人
+
+# 结论枚举
+conclusionEnum:
+  - PASS                # 通过，可进入下一阶段
+  - CONDITIONAL_PASS    # 有条件通过，需在限定时间内关闭问题
+  - FAIL                # 不通过，存在 P0/P1 阻塞
+
+# 校验规则（被 check-acceptance-checklist.rb 使用）
+validationRules:
+  - rule: TEMPLATE_EXISTS
+    description: v0.2 和 v1.0 模板文件必须存在
+    severity: P0
+  - rule: INSTANCE_HAS_ALL_CODES
+    description: 实例报告必须包含本清单定义的所有 ACC-Vxx-NN 编号
+    severity: P0
+  - rule: INSTANCE_FILLED
+    description: 实例报告不能保留未填充的 {{placeholder}} 占位符
+    severity: P1
+  - rule: V10_EIGHT_ROLES_SIGNED
+    description: v1.0 验收报告必须 8 角色签署齐全
+    severity: P0
+  - rule: CONCLUSION_VALID
+    description: 结论必须为 PASS/CONDITIONAL_PASS/FAIL 之一
+    severity: P0

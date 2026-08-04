@@ -1,0 +1,24 @@
+title = "YuTong Secret Scan Config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "yutong-db-password"
+description = "YuTong Database Password"
+regex = '''POSTGRES_PASSWORD\s*=\s*(.+)'''
+tags = ["db", "password"]
+
+[[allowlists]]
+description = "Allow dev password in env example and local config"
+paths = [
+  '''\.env\.example''',
+  '''deploy/docker-compose\.boot\.yml''',
+  '''backend/yutong-boot/src/main/resources/application-local\.yml''',
+]
+
+[[allowlists]]
+description = "Allow mock user ID in test code"
+regexes = [
+  '''01MOCKUSER0000000000000USER''',
+]

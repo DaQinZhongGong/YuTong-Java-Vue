@@ -1,0 +1,8 @@
+{
+    "license.error.fileInvalid": "The license file is invalid JSON or has an unsupported format",
+    "license.error.fieldsMissing": "The license file is missing required fields (licenseId/edition/subject/expireTime)",
+    "license.error.incompatible": "The license schema version is incompatible with the running platform",
+    "license.error.internal": "An internal license service error occurred while loading, verifying or refreshing the license",
+    "license.error.moduleDenied": "The module is not licensed or the license has expired, been revoked or is invalid",
+    "license.error.quotaExceeded": "The licensed quota for the current period has been exceeded"
+}

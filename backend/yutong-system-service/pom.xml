@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.yutong</groupId>
+        <artifactId>yutong-parent</artifactId>
+        <version>0.2.0</version>
+    </parent>
+
+    <artifactId>yutong-system-service</artifactId>
+    <name>YuTong System Service</name>
+    <description>平台基础: 字典、参数、文件、消息、日志、任务、监控</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.yutong</groupId>
+            <artifactId>yutong-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yutong</groupId>
+            <artifactId>yutong-infra</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yutong</groupId>
+            <artifactId>yutong-auth-adapter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yutong</groupId>
+            <artifactId>yutong-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- GA2-32: Redis PubSub 跨实例广播推送信封。boot 单机模式可选，无 Redis 时 PushService 自动降级 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- GA2-19-1: 幂等服务单元测试 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

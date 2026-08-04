@@ -1,0 +1,19 @@
+{
+    "file.list.fileNamePlaceholder": "请输入文件名",
+    "file.list.uploadFile": "上传文件",
+    "file.list.emptyData": "暂无数据",
+    "file.list.fileName": "文件名",
+    "file.list.type": "类型",
+    "file.list.ext": "扩展名",
+    "file.list.size": "大小",
+    "file.list.storageType": "存储类型",
+    "file.list.uploadStatus": "上传状态",
+    "file.list.uploadTime": "上传时间",
+    "file.list.action": "操作",
+    "file.msg.uploadSuccess": "上传成功",
+    "file.msg.confirmDelete": "确定删除文件 [{name}] 吗？该操作不可恢复。",
+    "file.msg.tip": "提示",
+    "file.msg.deleteSuccess": "删除成功",
+    "file.status.success": "成功",
+    "file.status.failed": "失败"
+}

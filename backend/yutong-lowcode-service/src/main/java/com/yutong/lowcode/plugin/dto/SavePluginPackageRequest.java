@@ -1,0 +1,56 @@
+package com.yutong.lowcode.plugin.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+
+/**
+ * 保存插件包请求。
+ * id 为空表示新建，非空表示修改（修改时 version 必填用于乐观锁）
+ */
+@Getter
+@Setter
+public class SavePluginPackageRequest {
+
+    /** 为空表示新建 */
+    private String id;
+
+    /** 修改时必填，乐观锁版本号 */
+    private Integer version;
+
+    @NotBlank(message = "插件编码不能为空")
+    @Size(max = 64, message = "插件编码长度不能超过64")
+    private String pluginCode;
+
+    @NotBlank(message = "插件名称不能为空")
+    @Size(max = 128, message = "插件名称长度不能超过128")
+    private String pluginName;
+
+    @Size(max = 32, message = "插件版本长度不能超过32")
+    private String pluginVersion;
+
+    @Size(max = 128, message = "包哈希长度不能超过128")
+    private String packageHash;
+
+    @Size(max = 16, message = "签名状态长度不能超过16")
+    private String signatureStatus;
+
+    @Size(max = 32, message = "授权类型长度不能超过32")
+    private String licenseType;
+
+    @Size(max = 16, message = "风险等级长度不能超过16")
+    private String riskLevel;
+
+    @Size(max = 16, message = "最低平台版本长度不能超过16")
+    private String minPlatformVersion;
+
+    @Size(max = 16, message = "最高平台版本长度不能超过16")
+    private String maxPlatformVersion;
+
+    @Size(max = 16, message = "状态长度不能超过16")
+    private String status;
+
+    @Size(max = 256, message = "备注长度不能超过256")
+    private String remark;
+}

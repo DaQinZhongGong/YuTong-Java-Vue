@@ -3,6 +3,7 @@
 
 # Log file
 *.log
+logs/
 
 # BlueJ files
 *.ctxt
@@ -19,12 +20,96 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# virtual machine crash logs
 hs_err_pid*
 replay_pid*
 
 # IDE
 .idea
+.vscode
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
 
-# YuTong-Java-Docs
-/YuTong-Java-Docs/
+# OS
+.DS_Store
+Thumbs.db
+
+# Backend
+backend/**/target/
+backend/**/build/
+backend/**/*.class
+backend/**/dependency-reduced-pom.xml
+backend/**/overlays/
+
+# Frontend
+node_modules/
+web-admin/dist/
+mobile-uniapp/dist/
+mobile-uniapp/unpackage/
+docs-site/dist/
+.pnpm-store/
+
+# Env / secrets
+#.env
+#.env.local
+#.env.*.local
+# 环境配置文件（非敏感但统一不提交，仅保留 .env.example 模板）
+#**/.env.development
+#**/.env.production
+#**/.env.e2e
+#**/.env.test
+*.pem
+*.key
+deploy/.env
+
+# VitePress 构建缓存与误建目录
+docs-site/.vitepress/cache/
+docs-site/--port/
+# docs-site 文档站整体不纳入版本控制（用户决策 2026-08-04）
+docs-site/
+
+# 一次性临时文件（调试/测试遗留）
+**/.tmp-*
+web-admin/.tmp-*
+
+# Build / reports / evidence (keep dirs, ignore generated content)
+build/reports/**/*
+!build/reports/**/.gitkeep
+
+# Docker volumes
+deploy/data/
+
+# Coverage
+coverage/
+*.lcov
+.nyc_output/
+
+# Local tool caches / IDE state (never commit)
+.m2/
+.pnpm-store-e2e/
+.reasonix/
+.workbuddy/
+
+# Ad-hoc review / analysis artifacts
+.harness-run/
+.harness-evidence/
+harness-insights.md
+
+# Debug / test leftovers
+explain.json
+tmp-poll.json
+test_write.txt
+
+# Symlink to docs-site (accidental root entry)
+docs
+
+# Frontend build & test artifacts
+web-admin/dist-old-*/
+**/test-results/
+**/playwright-report/
+*.tsbuildinfo
+vite.config.js.timestamp-*.mjs

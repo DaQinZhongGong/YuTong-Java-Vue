@@ -1,0 +1,127 @@
+# YuTong 后端运行编排 — 构建并运行 yutong-backend 镜像
+# 设计来源: 20-DevOps与部署设计、25-本地开发与工程初始化手册、82-环境变量与密钥管理规范详设
+#
+# 前置: 先启动依赖 (docker compose -f deploy/docker-compose.boot.yml up -d)
+# 启动: docker compose -f deploy/docker-compose.run.yml up -d --build
+# 停止: docker compose -f deploy/docker-compose.run.yml down
+#
+# GA2-30: 所有服务名、容器名、网络名、卷名必须带 yutong- 前缀，避免与其他项目冲突。
+#   - 镜像名: yutong-backend
+#   - 容器名: yutong-backend-run
+#   - 网络名: yutong_default (与 boot.yml 的 name: yutong 对齐)
+#   - 主机名: 依赖容器使用 yutong-postgres / yutong-redis / yutong-minio (非 localhost)
+
+name: yutong
+
+services:
+  yutong-backend-run:
+    # 镜像名严格使用 yutong- 前缀, 防止与其他项目冲突
+    image: yutong-backend:latest
+    container_name: yutong-backend-run
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    ports:
+      - "${BACKEND_PORT:-20010}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      # GA2-30: 容器内访问依赖必须使用 yutong- 前缀的容器名 (Docker 网络通过 container_name 寻址)
+      POSTGRES_HOST: yutong-postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-yutong}
+      POSTGRES_USER: ${POSTGRES_USER:-yutong}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-yutong-dev-password}
+      REDIS_HOST: yutong-redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      MINIO_ENDPOINT: http://yutong-minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-yutong-minio}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-yutong-minio-dev-secret}
+      MINIO_BUCKET: ${MINIO_BUCKET:-yutong-files}
+      YUTONG_AUTH_MODE: ${YUTONG_AUTH_MODE:-MOCK}
+      # GA2-L178: Demo 账号密码环境变量 (68 号文档: 密码统一由环境变量初始化)
+      # 4 类 Demo 账号 admin_demo/reviewer_demo/user_demo/viewer_demo 共用此密码
+      # 默认 demo123 仅用于本地演示, 生产/Demo 环境必须通过 .env 或 -e 覆盖
+      YUTONG_DEMO_PASSWORD: ${YUTONG_DEMO_PASSWORD:-demo123}
+      # GA2-46: 暴露 SPRING_DATASOURCE_URL/USERNAME/PASSWORD 环境变量,
+      # 让 sys_datasource 种子数据中的 env:SPRING_DATASOURCE_URL 占位符可解析,
+      # report_ro 只读从库演示环境复用主库连接, 生产环境应替换为真实只读副本
+      SPRING_DATASOURCE_URL: jdbc:postgresql://yutong-postgres:5432/${POSTGRES_DB:-yutong}?stringtype=unspecified
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-yutong}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-yutong-dev-password}
+    networks:
+      - default
+    depends_on:
+      yutong-postgres:
+        condition: service_healthy
+        required: false
+      yutong-redis:
+        condition: service_healthy
+        required: false
+      yutong-minio:
+        condition: service_healthy
+        required: false
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # 声明依赖服务 (与 boot.yml 共享, 通过默认网络互联)
+  # 如果 boot.yml 已启动, 这里只做声明不重建
+  yutong-postgres:
+    image: pgvector/pgvector:pg18
+    container_name: yutong-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-yutong}
+      POSTGRES_USER: ${POSTGRES_USER:-yutong}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-yutong-dev-password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "${POSTGRES_HOST_PORT:-20000}:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-yutong} -d ${POSTGRES_DB:-yutong}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  yutong-redis:
+    image: redis:7-alpine
+    container_name: yutong-redis
+    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
+    ports:
+      - "${REDIS_HOST_PORT:-20001}:6379"
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  yutong-minio:
+    image: minio/minio:latest
+    container_name: yutong-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-yutong-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-yutong-minio-dev-secret}
+    ports:
+      - "${MINIO_HOST_PORT:-20002}:9000"
+      - "${MINIO_CONSOLE_PORT:-20003}:9001"
+    volumes:
+      - ./data/minio:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  default:
+    name: yutong_default
+    driver: bridge

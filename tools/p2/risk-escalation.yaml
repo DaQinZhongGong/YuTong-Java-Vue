@@ -1,0 +1,62 @@
+# P2 风险升级规则机器可读定义
+# 来源：YuTong-Java-Docs/85-P2每日推进节奏与会议机制/85-P2每日推进节奏与会议机制.md
+# 用途：被 tools/p2/check-p2-exit.sh 和 meeting-templates 引用，统一风险升级决策。
+
+schemaVersion: '1.0.0'
+artifactId: yutong-p2-risk-escalation
+basedOn: docs/85-P2每日推进节奏与会议机制/85-P2每日推进节奏与会议机制.md
+
+# 风险等级枚举
+riskLevels:
+  - P0   # 阻塞后续任务，当天必须决策
+  - P1   # 影响阶段验收，需排期整改
+  - P2   # 不影响验收，记录跟进
+
+# 升级规则：每条定义 risk + escalateTo + timeLimit
+escalationRules:
+  - risk: P0阻塞
+    escalateTo:
+      - 架构负责人
+      - 产品负责人
+    timeLimit: '当天'
+    evidenceRequired: true
+    description: 任何阻塞后续任务的问题，必须在当天升级到架构负责人与产品负责人共同决策
+  - risk: 主键/API/目录冲突
+    escalateTo:
+      - 架构负责人
+    timeLimit: '当天'
+    evidenceRequired: true
+    description: 字符串主键策略、OpenAPI 契约、07 号目录布局的冲突属于架构基线冲突，必须当天升级
+  - risk: UI 规范冲突
+    escalateTo:
+      - 前端负责人
+      - 设计负责人
+    timeLimit: '1 天内'
+    evidenceRequired: true
+    description: Token、间距、组件状态、Figma 标注的冲突由前端负责人和设计负责人 1 天内决策
+  - risk: 环境阻塞
+    escalateTo:
+      - 运维负责人
+    timeLimit: '当天'
+    evidenceRequired: true
+    description: Docker、PostgreSQL、Redis、MinIO 等环境问题必须当天升级到运维负责人
+  - risk: 安全密钥问题
+    escalateTo:
+      - 安全负责人
+    timeLimit: '当天'
+    evidenceRequired: true
+    description: 硬编码密钥、依赖漏洞、镜像扫描问题必须当天升级到安全负责人
+
+# 证据要求
+evidenceRules:
+  - 风险升级必须留下记录（站会纪要 / 邮件 / IM 截图 / 工单链接）
+  - 升级对象必须在时限内回复处置意见
+  - 关闭风险必须有责任人确认和证据路径
+
+# 状态枚举
+statusEnum:
+  - OPEN          # 已识别，待升级
+  - ESCALATED     # 已升级到责任人
+  - IN_PROGRESS   # 责任人正在处置
+  - RESOLVED      # 已关闭，有证据
+  - ACCEPTED      # 风险接受，有记录

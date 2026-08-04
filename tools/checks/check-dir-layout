@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Check directory layout conformance
+# Design: 07-项目源代码目录层级详细设计, 99-CI流水线与发布证据自动化详设
+# Usage: bash tools/checks/check-dir-layout
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+errors=0
+
+check_dir() {
+  local path="$1"
+  local desc="$2"
+  if [ ! -d "$PROJECT_ROOT/$path" ]; then
+    echo "VIOLATION: Missing required directory: $path ($desc)"
+    errors=$((errors + 1))
+  fi
+}
+
+check_file() {
+  local path="$1"
+  local desc="$2"
+  if [ ! -f "$PROJECT_ROOT/$path" ]; then
+    echo "VIOLATION: Missing required file: $path ($desc)"
+    errors=$((errors + 1))
+  fi
+}
+
+# Required top-level dirs
+check_dir "backend" "backend source root"
+check_dir "backend/yutong-common" "common module"
+check_dir "backend/yutong-infra" "infra module"
+check_dir "backend/yutong-auth-adapter" "auth adapter module"
+check_dir "backend/yutong-boot" "boot module"
+check_dir "backend/yutong-sample-service" "sample service module"
+check_dir "backend/yutong-lowcode-service" "lowcode service module"
+check_dir "backend/yutong-ai-service" "ai service module"
+check_dir "web-admin" "web admin frontend"
+check_dir "mobile-uniapp" "mobile uniapp"
+check_dir "database/migrations" "flyway migrations"
+check_dir "database/seed" "flyway seed"
+check_dir "deploy" "deployment configs"
+check_dir "tools/checks" "check scripts"
+check_dir "openapi" "OpenAPI export"
+check_dir "release-evidence" "release evidence archive"
+check_dir "YuTong-Java-Docs" "design docs"
+
+# Required files
+check_file "backend/pom.xml" "backend parent pom"
+check_file "backend/yutong-boot/src/main/resources/application.yml" "main app config"
+check_file "backend/yutong-boot/src/main/resources/application-local.yml" "local profile"
+check_file ".gitignore" "git ignore"
+check_file ".editorconfig" "editor config"
+
+if [ "$errors" -gt 0 ]; then
+  echo ""
+  echo "FAILED: Found $errors layout violation(s)."
+  exit 1
+fi
+
+echo "PASSED: Directory layout conforms to 07 design."
+exit 0

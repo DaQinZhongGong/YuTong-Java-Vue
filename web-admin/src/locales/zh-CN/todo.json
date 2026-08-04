@@ -1,0 +1,12 @@
+{
+    "todo.field.title":  "标题",
+    "todo.field.businessType":  "业务类型",
+    "todo.field.priority":  "优先级",
+    "todo.field.dueDate":  "截止日期",
+    "todo.field.operation":  "操作",
+    "todo.action.complete":  "完成",
+    "todo.status.pending":  "待处理",
+    "todo.status.done":  "已完成",
+    "todo.status.cancelled":  "已取消",
+    "todo.msg.completed":  "已完成"
+}

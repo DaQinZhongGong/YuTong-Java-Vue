@@ -1,0 +1,19 @@
+{
+    "file.list.fileNamePlaceholder": "Enter file name",
+    "file.list.uploadFile": "Upload File",
+    "file.list.emptyData": "No data",
+    "file.list.fileName": "File Name",
+    "file.list.type": "Type",
+    "file.list.ext": "Extension",
+    "file.list.size": "Size",
+    "file.list.storageType": "Storage Type",
+    "file.list.uploadStatus": "Upload Status",
+    "file.list.uploadTime": "Upload Time",
+    "file.list.action": "Action",
+    "file.msg.uploadSuccess": "Upload successful",
+    "file.msg.confirmDelete": "Are you sure you want to delete file [{name}]? This operation cannot be undone.",
+    "file.msg.tip": "Tip",
+    "file.msg.deleteSuccess": "Delete successful",
+    "file.status.success": "Success",
+    "file.status.failed": "Failed"
+}

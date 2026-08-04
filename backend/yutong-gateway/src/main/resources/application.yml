@@ -1,0 +1,59 @@
+spring:
+  application:
+    name: yutong-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            # 认证端点限流（登录/刷新 Token 等敏感接口单独限制，防止暴力破解）
+            - id: yutong-auth-rate-limited
+              uri: http://yutong-backend-run:8080
+              predicates:
+                - Path=/api/v1/auth/login,/api/v1/auth/refresh-token
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@principalNameKeyResolver}"
+            # 通用后端路由（默认限流）
+            - id: yutong-backend
+              uri: http://yutong-backend-run:8080
+              predicates:
+                - Path=/api/v1/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 100
+                    redis-rate-limiter.burstCapacity: 200
+                    key-resolver: "#{@principalNameKeyResolver}"
+          default-filters:
+            - name: Retry
+              args:
+                retries: 1
+                statuses: SERVICE_UNAVAILABLE
+
+# 安全加固配置（CORS 白名单，逗号分隔）
+yutong:
+  security:
+    cors:
+      allowed-origins: http://localhost:20010,http://localhost:5173,http://localhost:3000
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    com.yutong.gateway: info
+    org.springframework.cloud.gateway: info

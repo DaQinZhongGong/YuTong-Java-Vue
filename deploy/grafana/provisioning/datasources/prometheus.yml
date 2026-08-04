@@ -1,0 +1,11 @@
+# YuTong Grafana datasource provisioning
+# Design: 62-可观测性指标日志链路详设
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://yutong-prometheus:9090
+    isDefault: true
+    editable: false

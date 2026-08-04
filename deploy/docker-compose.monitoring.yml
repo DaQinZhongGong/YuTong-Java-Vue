@@ -1,0 +1,50 @@
+﻿# YuTong Monitoring Stack (Prometheus + Grafana)
+# Design: 62-可观测性指标日志链路详设, 12-中间件集成设计, 33-商用运维SLA与灾备设计
+# Usage: docker compose -f deploy/docker-compose.monitoring.yml up -d
+#
+# GA2-30: 所有服务名、容器名、网络名、卷名必须带 yutong- 前缀，避免与其他项目冲突。
+# 统一项目名，确保默认网络为 yutong_default，与其他项目隔离
+name: yutong
+
+services:
+  yutong-prometheus:
+    image: prom/prometheus:latest
+    container_name: yutong-prometheus
+    ports:
+      - "20020:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - yutong-prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+
+  yutong-grafana:
+    image: grafana/grafana:latest
+    container_name: yutong-grafana
+    ports:
+      - "20021:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - yutong-grafana-data:/var/lib/grafana
+    depends_on:
+      - yutong-prometheus
+    restart: unless-stopped
+
+networks:
+  default:
+    name: yutong_default
+    external: true
+
+volumes:
+  yutong-prometheus-data:
+  yutong-grafana-data:

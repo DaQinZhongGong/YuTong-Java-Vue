@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.yutong</groupId>
+        <artifactId>yutong-parent</artifactId>
+        <version>0.2.0</version>
+    </parent>
+
+    <artifactId>yutong-api</artifactId>
+    <name>YuTong API</name>
+    <description>跨模块 Facade 接口、DTO、Feign 契约 (不放 Controller 和 Mapper)</description>
+
+    <dependencies>
+        <!-- Facade 接口依赖通用 Result/ErrorCode/异常，不依赖业务模块 -->
+        <dependency>
+            <groupId>com.yutong</groupId>
+            <artifactId>yutong-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

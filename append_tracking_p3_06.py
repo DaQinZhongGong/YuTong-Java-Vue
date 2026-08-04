@@ -1,0 +1,8 @@
+import pathlib
+
+p = pathlib.Path(r'd:\\MyCode\\YuTong-Java-Vue\\YuTong-Java-Docs\\23-设计到落地追踪记录\\23-设计到落地追踪记录.md')
+rows = """| 2026-07-25 | P3-06 移动待办 H5 启动验证 | 修复移动端 API 地址与 Demo 账号，重新应用种子数据，H5 服务启动并验证 reviewer_demo 待办列表返回 2 条记录 | （1）问题诊断：mobile-uniapp `src/utils/request.ts` BASE_URL 仍为 `http://localhost:8082/api/v1`，与 Docker 映射宿主机端口 8092 不一致；`src/pages/login/login.vue` 默认账号为 `admin/admin`，与 MOCK 模式 Demo 账号体系不匹配；`database/seed/R__seed_demo_data.sql` 中 `sys_todo_task` 的 `assignee_id` 指向默认用户 `01MOCKUSER0000000000000USER`，导致 reviewer_demo（approver 角色 ID `01MOCKUSER0000000000APPROVER`）待办列表为空；（2）修复配置：BASE_URL 改为 `http://localhost:8092/api/v1`（与 `deploy/.env BACKEND_PORT=8092` 对齐）；登录页默认账号改为 `admin_demo`/`demo123`；种子数据将审批待办 `01JYYDEMOTEAM000000001`/`000000003` 的 assignee_id 改为 `01MOCKUSER0000000000APPROVER`；（3）数据重跑：通过 `docker cp` 将 `R__seed_demo_data.sql` 复制到 `yutong-postgres` 容器 `/tmp` 后执行 `psql -f`，`sys_todo_task` 重新插入 4 条记录（2 条分配至 approver）；（4）H5 启动：mobile-uniapp 执行 `npm install`（585 packages up to date）后 `npm run dev:h5`，因 5174 端口被占用自动切换到 `http://localhost:5175/`，ready in 3179ms；（5）API 验证：reviewer_demo/demo123 登录返回 `mockUserType=approver`/`dataScopeType=CUSTOM`/`username=reviewer_demo`；GET `/api/v1/mobile/todos?pageNo=1&pageSize=10` 返回 records 2 条（`01JYYDEMOTEAM000000001` 上海示范贸易-实施服务采购 PENDING、`01JYYDEMOTEAM000000003` 北京示例科技-服务器采购 DONE），total=2/page=1/size=10，验证待办数据修复生效。已知偏差：DEV-P3-06-001 H5 实际运行端口为 5175 而非默认 5174（端口占用自动切换，已在测试地址中注明）；DEV-P3-06-002 PowerShell 输出中文标题显示乱码，系终端编码问题，后端响应 Content-Type 为 application/json;charset=UTF-8，不影响 H5 页面渲染。验收结论：**PASS**。 | `11-Uniapp移动端设计`、`92-Uniapp移动端逐页交互详设`、`18-样例业务详细设计`、`68-演示环境与样例数据剧本详设`、`23` |
+"""
+with p.open('a', encoding='utf-8') as f:
+    f.write(rows)
+print('Appended', len(rows), 'chars')

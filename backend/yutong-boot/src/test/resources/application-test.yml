@@ -1,0 +1,104 @@
+# test profile: GA2-L180 契约测试基础设施
+# 复用已运行的 Docker 容器 (yutong-postgres:20000 / yutong-redis:20001 / yutong-minio:20002)
+# 第一版直接使用 yutong DB + @Transactional 回滚隔离测试数据
+# 注意: spring.profiles.active 由 @ActiveProfiles("test") 注解设置, 此处不再声明
+spring:
+  flyway:
+    enabled: true
+    locations: filesystem:../../database/migrations,filesystem:../../database/seed
+    baseline-on-migrate: true
+    validate-on-migrate: false
+    placeholder-replacement: false
+    # 允许测试期间 clean 重建 schema (仅测试 profile 启用)
+    clean-disabled: false
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:20000}/${POSTGRES_DB:yutong}?stringtype=unspecified
+    username: ${POSTGRES_USER:yutong}
+    password: ${POSTGRES_PASSWORD:yutong-dev-password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:20001}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DB:0}
+
+# MyBatis-Plus (与 application.yml 一致)
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: INPUT
+      logic-delete-field: deleted
+      logic-delete-value: true
+      logic-not-delete-value: false
+
+# Sa-Token (与 application.yml 一致)
+sa-token:
+  token-name: Authorization
+  timeout: 86400
+  active-timeout: -1
+  is-concurrent: true
+  is-share: false
+  token-style: uuid
+  is-log: false
+
+# Springdoc OpenAPI (测试期间禁用)
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# YuTong 平台配置
+yutong:
+  auth:
+    mode: MOCK
+    mock:
+      enabled-profiles: local,test
+  # 实时推送 (测试期间禁用)
+  realtime:
+    push:
+      enabled: false
+      endpoint: /ws/v1
+      queue-size: 1000
+      heartbeat-seconds: 30
+      heartbeat-fail-threshold: 3
+      redis-channel: yutong:realtime:push
+      allow-tenant-subscribe: true
+  # GA2-L170 模块开关: 测试期间全部开启
+  modules:
+    lowcode: true
+    ai: true
+    report: true
+    workflow: true
+    datasource: true
+    plugin: true
+  # MinIO 对象存储 (复用 yutong-minio 容器)
+  storage:
+    minio:
+      endpoint: ${MINIO_ENDPOINT:http://localhost:20002}
+      access-key: ${MINIO_ACCESS_KEY:yutong-minio}
+      secret-key: ${MINIO_SECRET_KEY:yutong-minio-dev-secret}
+      bucket: ${MINIO_BUCKET:yutong-files}
+
+logging:
+  level:
+    com.yutong: DEBUG
+    org.springframework.web: INFO
+    org.testcontainers: INFO

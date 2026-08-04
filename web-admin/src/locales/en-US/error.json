@@ -1,0 +1,8 @@
+{
+    "error.forbidden.noPermission":  "You do not have permission to access this page",
+    "error.forbidden.noPermissionWithRole":  "You do not have permission to access this page (current role: {role})",
+    "error.forbidden.backHome":  "Back to home",
+    "error.forbidden.reLogin":  "Log in again",
+    "error.notFound.message":  "Sorry, the page you requested does not exist",
+    "error.notFound.backHome":  "Back to home"
+}

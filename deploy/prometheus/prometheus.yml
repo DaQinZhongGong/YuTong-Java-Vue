@@ -1,0 +1,42 @@
+# YuTong Prometheus config [T]
+# Design: 62-可观测性指标日志链路详设
+# Scrape yutong-boot actuator/prometheus endpoint every 15s
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'yutong-monitor'
+
+scrape_configs:
+  # YuTong backend application
+  - job_name: 'yutong-boot'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          # 本地 Docker 运行时后端映射到宿主机 20010 (deploy/.env BACKEND_PORT=20010)
+          - 'host.docker.internal:20010'
+          # 同一 yutong_default 网络内直接访问容器 (Linux / CI 场景)
+          - 'yutong-backend-run:8080'
+        labels:
+          service: 'yutong-boot'
+          env: 'local'
+
+  # YuTong gateway (optional, only when docker-compose.gateway.yml is running)
+  - job_name: 'yutong-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'yutong-gateway-run:8080'
+        labels:
+          service: 'yutong-gateway'
+          env: 'local'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+# Alert rules (62-可观测性详设: API 5xx > 2%, P95 > 2s, DB pool > 90%)
+rule_files:
+  - 'alerts.yml'

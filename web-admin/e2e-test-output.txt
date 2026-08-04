@@ -1,0 +1,79 @@
+﻿
+Running 18 tests using 1 worker
+
+  ok  1 [chromium] › e2e\auth.spec.ts:22:3 › GA2-L183 认证流程 › admin_demo 登录成功跳转 /dashboard (2.8s)
+  ok  2 [chromium] › e2e\auth.spec.ts:31:3 › GA2-L183 认证流程 › viewer_demo 登录成功跳转 /dashboard (3.0s)
+  ok  3 [chromium] › e2e\auth.spec.ts:38:3 › GA2-L183 认证流程 › 错误密码登录失败, 停留 /login (TC-P2-AUTH-001 反向用例) (5.7s)
+  ok  4 [chromium] › e2e\auth.spec.ts:61:3 › GA2-L183 认证流程 › 退出登录后跳转 /login (4.1s)
+npx : [GA2-L183] 新增客户失败 (预期前端 bug): expect(locator).toBeVisible() failed
+At line:15 char:7422
++ ... pgrep\bin'; npx playwright test --reporter=list --retries=0 2>&1 | Te ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([GA2-L183] 新增客户...isible() failed:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+Locator: locator('.el-message--success').first()
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for locator('.el-message--success').first()
+
+  ok  5 [chromium] › e2e\customer-crud.spec.ts:47:3 › GA2-L183 客户 CRUD 全流程 › 新增客户成功 (CT-createCustomer) (11.2s)
+[GA2-L183] 查询客户失败 (预期前端 bug): expect(locator).toBeVisible() failed
+
+Locator: locator('.el-table__row').filter({ has: locator('td').filter({ hasText: 'E2E查询测试_E2E-1784798015829' }) }).firs
+t()
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for locator('.el-table__row').filter({ has: locator('td').filter({ hasText: 'E2E查询测试_E2E-1784798015829' }) 
+}).first()
+
+  ok  6 [chromium] › e2e\customer-crud.spec.ts:78:3 › GA2-L183 客户 CRUD 全流程 › 查询客户 (CT-listCustomers) (12.2s)
+[GA2-L183] 编辑客户失败 (预期前端 bug): expect(locator).toBeVisible() failed
+
+Locator: locator('.el-table__row').filter({ has: locator('td').filter({ hasText: 'E2E编辑前_E2E-1784798028159' }) }).first
+()
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for locator('.el-table__row').filter({ has: locator('td').filter({ hasText: 'E2E编辑前_E2E-1784798028159' }) }
+).first()
+
+  ok  7 [chromium] › e2e\customer-crud.spec.ts:105:3 › GA2-L183 客户 CRUD 全流程 › 编辑客户成功 (CT-updateCustomer) (12.2s)
+[GA2-L183] 删除客户失败 (预期前端 bug): expect(locator).toBeVisible() failed
+
+Locator: locator('.el-table__row').filter({ has: locator('td').filter({ hasText: 'E2E删除测试_E2E-1784798040425' }) }).firs
+t()
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for locator('.el-table__row').filter({ has: locator('td').filter({ hasText: 'E2E删除测试_E2E-1784798040425' }) 
+}).first()
+
+  ok  8 [chromium] › e2e\customer-crud.spec.ts:141:3 › GA2-L183 客户 CRUD 全流程 › 删除客户成功 (CT-deleteCustomer) (12.3s)
+  ok  9 [chromium] › e2e\customer-crud.spec.ts:166:3 › GA2-L183 客户 CRUD 全流程 › 客户编码重复返回 BIZ-409005 (TC-P3-CUS-002) (14.5s)
+  ok 10 [chromium] › e2e\customer-permission.spec.ts:27:3 › GA2-L183 客户管理权限控制 › viewer 不见新增/编辑/删除按钮 (TC-E2E-WEB-003) (3.8s)
+  ok 11 [chromium] › e2e\customer-permission.spec.ts:50:3 › GA2-L183 客户管理权限控制 › admin 可见新增/编辑/删除按钮 (3.8s)
+  ok 12 [chromium] › e2e\customer-permission.spec.ts:63:3 › GA2-L183 客户管理权限控制 › viewer 直调 createCustomer API 返回 403 AUTH-403001 (TC-SEC-AUTH-003) (2.8s)
+  ok 13 [chromium] › e2e\customer-permission.spec.ts:96:3 › GA2-L183 客户管理权限控制 › admin 直调 createCustomer API 返回 200 (TC-SEC-AUTH-003 对照组) (2.8s)
+  ok 14 [chromium] › e2e\customer-validation.spec.ts:34:3 › GA2-L183 客户表单校验 › 必填字段为空提交应展示错误 (TC-E2E-WEB-002) (4.8s)
+  ok 15 [chromium] › e2e\customer-validation.spec.ts:59:3 › GA2-L183 客户表单校验 › 客户编码必填 (留空时不应创建成功) (5.5s)
+  ok 16 [chromium] › e2e\customer-validation.spec.ts:85:3 › GA2-L183 客户表单校验 › 客户名称必填 (留空时不应创建成功) (5.5s)
+  ok 17 [chromium] › e2e\customer-validation.spec.ts:110:3 › GA2-L183 客户表单校验 › 状态字段为下拉选择, 不可输入非法值 (5.6s)
+  ok 18 [chromium] › e2e\customer-validation.spec.ts:152:3 › GA2-L183 客户表单校验 › 取消按钮关闭新增对话框 (4.7s)
+
+  18 passed (2.0m)

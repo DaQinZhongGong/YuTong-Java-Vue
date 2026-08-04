@@ -1,0 +1,19 @@
+{
+    "product.field.name":  "商品名称",
+    "product.field.code":  "商品编码",
+    "product.field.unit":  "单位",
+    "product.field.price":  "单价",
+    "product.field.status":  "状态",
+    "product.field.operation":  "操作",
+    "product.field.remark":  "备注",
+    "product.status.enabled":  "启用",
+    "product.status.disabled":  "禁用",
+    "product.placeholder.searchName":  "搜索商品名称",
+    "product.action.add":  "新增商品",
+    "product.action.edit":  "编辑商品",
+    "product.msg.confirmDelete":  "确定删除商品 [{name}] 吗？",
+    "product.msg.tip":  "提示",
+    "product.msg.deleteSuccess":  "删除成功",
+    "product.msg.updateSuccess":  "更新成功",
+    "product.msg.createSuccess":  "创建成功"
+}

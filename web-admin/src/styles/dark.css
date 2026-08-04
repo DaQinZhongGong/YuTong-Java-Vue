@@ -1,0 +1,86 @@
+/**
+ * YuTong 设计系统 Token - 暗色主题 (default-dark)
+ * 设计来源: 50-设计系统与视觉规范详设 (Token 到 CSS Variables 完整映射 line 311-336)
+ *
+ * 启用方式: <html class="dark"> 或 document.documentElement.classList.add('dark')
+ * 覆盖策略: 仅覆盖 --yt-* 色彩/背景/边框/文字 token, --el-* 通过桥接自动继承
+ */
+
+html.dark {
+  /* ===== 色彩覆盖 (50号文档 line 313-325 暗色值) ===== */
+  --yt-color-primary: #60a5fa;
+  --yt-color-success: #4ade80;
+  --yt-color-warning: #fbbf24;
+  --yt-color-danger: #f87171;
+  --yt-color-info: #94a3b8;
+
+  /* 主色浅色阶 (暗色场景下调亮以保持对比度) */
+  --yt-color-primary-light-3: #7ab3fc;
+  --yt-color-primary-light-5: #9cc4fd;
+  --yt-color-primary-light-7: #bdd5fe;
+  --yt-color-primary-light-9: #1e3a5f;
+  --yt-color-primary-dark-2: #3b82f6;
+
+  /* 背景色 */
+  --yt-bg-page: #0f172a;
+  --yt-bg-card: #1e293b;
+
+  /* 边框 */
+  --yt-border-default: #334155;
+  --yt-border-light: #1e293b;
+
+  /* 文字 */
+  --yt-text-primary: #f8fafc;
+  --yt-text-secondary: #cbd5e1;
+  --yt-text-regular: #e2e8f0;
+  --yt-text-disabled: #64748b;
+  --yt-text-placeholder: #475569;
+
+  /* ===== 阴影覆盖 (暗色场景加深) ===== */
+  --yt-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.24);
+  --yt-shadow-popover: 0 12px 32px rgba(0, 0, 0, 0.45);
+
+  /* ===== Element Plus 暗色组件变量 (el-* 通过桥接自动继承 --yt-*, 此处补充组件级暗色覆盖) ===== */
+  --el-mask-color: rgba(0, 0, 0, 0.6);
+  --el-fill-color: #1e293b;
+  --el-fill-color-light: #334155;
+  --el-fill-color-lighter: #1e293b;
+  --el-fill-color-blank: #0f172a;
+  /* 暗色 RGB 变量覆盖 */
+  --el-color-primary-rgb: 96, 165, 250;
+  --el-color-success-rgb: 74, 222, 128;
+  --el-color-warning-rgb: 251, 191, 36;
+  --el-color-danger-rgb: 248, 113, 113;
+  --el-color-info-rgb: 148, 163, 184;
+}
+
+/**
+ * 大屏科技风主题 (screen-dark)
+ * 设计来源: 50号文档 line 299
+ * 启用方式: <html class="theme-screen-dark">
+ * 注: 大屏可使用暗色与光效，但不得影响标签可读性和数据来源展示 (50号文档 line 179)
+ */
+html.theme-screen-dark {
+  --yt-bg-page: #020617;
+  --yt-bg-card: #0f172a;
+  --yt-border-default: #1e293b;
+  --yt-color-primary: #38bdf8;
+  --yt-color-success: #34d399;
+  --yt-color-warning: #fbbf24;
+  --yt-color-danger: #f87171;
+  --yt-text-primary: #f1f5f9;
+  --yt-text-secondary: #94a3b8;
+}
+
+/**
+ * 高密度企业后台主题 (compact)
+ * 设计来源: 50号文档 line 300
+ * 启用方式: <html class="theme-compact">
+ * 效果: 表格行高压缩, 间距收紧
+ */
+html.theme-compact {
+  --yt-table-row-height: 36px;
+  --yt-content-padding: 16px;
+  --yt-space-md: 12px;
+  --yt-space-lg: 20px;
+}

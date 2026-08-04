@@ -1,0 +1,20 @@
+{
+    "customer.list.customerName":  "Customer Name",
+    "customer.list.searchPlaceholder":  "Search customer name",
+    "customer.list.addCustomer":  "Add Customer",
+    "customer.list.customerCode":  "Customer Code",
+    "customer.list.contactName":  "Contact Person",
+    "customer.list.phone":  "Phone",
+    "customer.list.status":  "Status",
+    "customer.list.enabled":  "Enabled",
+    "customer.list.disabled":  "Disabled",
+    "customer.list.action":  "Action",
+    "customer.list.editCustomer":  "Edit Customer",
+    "customer.list.address":  "Address",
+    "customer.list.remark":  "Remark",
+    "customer.msg.confirmDelete":  "Are you sure you want to delete customer [{name}]?",
+    "customer.msg.tip":  "Tip",
+    "customer.msg.deleteSuccess":  "Delete successful",
+    "customer.msg.updateSuccess":  "Update successful",
+    "customer.msg.createSuccess":  "Create successful"
+}

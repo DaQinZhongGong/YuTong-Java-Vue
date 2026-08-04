@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+# Environment variable registry check
+# Design: 82-环境变量与密钥管理规范详设, 99-CI流水线与发布证据自动化详设
+# Validates .env.example contains all required variables defined in design doc 82.
+# Supports variable aliases (e.g. DB_HOST ~ POSTGRES_HOST).
+# Usage: bash tools/checks/check-env-vars
+# Output: build/reports/checks/env-vars.json
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+ENV_EXAMPLE="$PROJECT_ROOT/.env.example"
+REPORT_DIR="$PROJECT_ROOT/build/reports/checks"
+REPORT_FILE="$REPORT_DIR/env-vars.json"
+
+if [ ! -f "$ENV_EXAMPLE" ]; then
+  echo "ERROR: .env.example not found at $ENV_EXAMPLE"
+  exit 1
+fi
+
+mkdir -p "$REPORT_DIR"
+
+errors=0
+warnings=0
+missing_vars=""
+secret_violations=""
+
+# --- Required variables per design doc 82 ---
+# Format: VAR_NAME|alias1,alias2|category|description
+# Aliases are alternative names that satisfy the requirement.
+required_vars=(
+  "APP_ENV|SPRING_PROFILES_ACTIVE|Profile|运行环境 local/test/prod"
+  "APP_SECRET||Security|应用签名密钥"
+  "DB_HOST|POSTGRES_HOST|Database|数据库地址"
+  "DB_PORT|POSTGRES_PORT|Database|数据库端口"
+  "DB_NAME|POSTGRES_DB|Database|数据库名"
+  "DB_USER|POSTGRES_USER|Database|数据库用户"
+  "DB_PASSWORD|POSTGRES_PASSWORD|Database|数据库密码"
+  "REDIS_HOST||Redis|Redis 地址"
+  "MINIO_ENDPOINT||Storage|对象存储地址"
+  "MINIO_ACCESS_KEY||Storage|对象存储 AK"
+  "MINIO_SECRET_KEY||Storage|对象存储 SK"
+  "AI_PROVIDER||AI|AI 供应商"
+  "AI_API_KEY||AI|AI Key"
+  "IDENTITY_MODE|YUTONG_AUTH_MODE|Auth|唯一生产身份模式"
+  "AUTH_MOCK_ENABLED|YUTONG_AUTH_MOCK_ENABLED_PROFILES|Auth|是否启用 Mock"
+  "AUTH_ACCESS_TOKEN_TTL_SECONDS||Auth|访问令牌有效期"
+  "AUTH_REFRESH_TOKEN_TTL_SECONDS||Auth|刷新令牌有效期"
+  "AUTH_REFRESH_ROTATION_ENABLED||Auth|刷新令牌轮换"
+  "AUTH_COOKIE_MODE||Auth|Web HttpOnly Cookie 模式"
+  "OIDC_ISSUER||OIDC|固定 issuer"
+  "OIDC_CLIENT_ID||OIDC|公共客户端 ID"
+  "OIDC_CLIENT_SECRET_REF||OIDC|机密客户端 secret 引用"
+  "OIDC_ALLOWED_ALGS||OIDC|签名算法白名单"
+  "OIDC_REDIRECT_URIS||OIDC|精确允许的回调 URI"
+  "OIDC_CLOCK_SKEW_SECONDS||OIDC|最大时钟偏差"
+  "SSO_METADATA_URL||SSO|SSO/CAS/SAML 元数据地址"
+  "SSO_CERT_REF||SSO|SSO 签名证书引用"
+  "LDAP_URL||LDAP|LDAP/AD TLS 地址"
+  "LDAP_BASE_DN||LDAP|搜索根"
+  "LDAP_BIND_DN||LDAP|只读绑定账号"
+  "LDAP_BIND_PASSWORD||LDAP|绑定密码"
+  "CUSTOMER_IAM_JWKS_URL||IAM|客户 IAM JWKS"
+  "CUSTOMER_IAM_AUDIENCE||IAM|客户 token audience"
+  "BREAK_GLASS_ADMIN_REFS||Security|应急管理员 Secret 引用"
+)
+
+# --- Parse .env.example: extract declared variable names ---
+# Skip comments and blank lines. Extract VAR_NAME from "VAR_NAME=value" lines.
+declared_vars=$(grep -vE '^\s*#' "$ENV_EXAMPLE" | grep -vE '^\s*$' | awk -F'=' '{print $1}' | xargs || true)
+
+# --- Check each required variable ---
+for entry in "${required_vars[@]}"; do
+  IFS='|' read -r var_name aliases category desc <<< "$entry"
+  found=false
+  # Check primary name
+  if echo "$declared_vars" | grep -qw "$var_name"; then
+    found=true
+  fi
+  # Check aliases
+  if [ "$found" = false ] && [ -n "$aliases" ]; then
+    IFS=',' read -ra alias_list <<< "$aliases"
+    for alias in "${alias_list[@]}"; do
+      if echo "$declared_vars" | grep -qw "$alias"; then
+        found=true
+        break
+      fi
+    done
+  fi
+  if [ "$found" = false ]; then
+    missing_vars="$missing_vars{\"var\":\"$var_name\",\"category\":\"$category\",\"description\":\"$desc\"},"
+    echo "VIOLATION: Required env var $var_name ($category) not declared in .env.example"
+    errors=$((errors + 1))
+  fi
+done
+
+# --- Check for real secrets (values that are not placeholders) ---
+# Allowed value patterns: ${...}, empty, or clearly dev/example values
+# Flag values that look like real secrets (non-empty, non-placeholder, in sensitive categories)
+sensitive_patterns="PASSWORD|SECRET|API_KEY|ACCESS_KEY|BIND_DN|CLIENT_SECRET"
+while IFS= read -r line; do
+  # Skip comments and blank lines
+  echo "$line" | grep -qE '^\s*#|^\s*$' && continue
+  var_name=$(echo "$line" | awk -F'=' '{print $1}')
+  var_value=$(echo "$line" | cut -d'=' -f2-)
+  # Check if this is a sensitive variable
+  if echo "$var_name" | grep -qE "$sensitive_patterns"; then
+    # Allowed: ${...}, empty, or contains "dev"/"example"/"placeholder"/"change-me"
+    if [ -n "$var_value" ] && \
+       ! echo "$var_value" | grep -qE '^\$\{' && \
+       ! echo "$var_value" | grep -qiE 'dev|example|placeholder|change-me|dummy|sample|test'; then
+      secret_violations="$secret_violations{\"var\":\"$var_name\",\"value\":\"***REDACTED***\"},"
+      echo "WARNING: $var_name in .env.example may contain a real secret value (use \${...} placeholder)"
+      warnings=$((warnings + 1))
+    fi
+  fi
+done < "$ENV_EXAMPLE"
+
+# --- Generate JSON report ---
+missing_vars=${missing_vars%,}
+secret_violations=${secret_violations%,}
+required_count=${#required_vars[@]}
+declared_count=$(echo "$declared_vars" | wc -w | xargs)
+
+cat > "$REPORT_FILE" <<EOF
+{
+  "check": "env-vars",
+  "status": "$([ "$errors" -eq 0 ] && echo "PASSED" || echo "FAILED")",
+  "errors": $errors,
+  "warnings": $warnings,
+  "summary": {
+    "requiredVarCount": $required_count,
+    "declaredVarCount": $declared_count,
+    "missingVars": [$missing_vars],
+    "secretViolations": [$secret_violations]
+  },
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+}
+EOF
+
+echo ""
+echo "Report saved to: $REPORT_FILE"
+if [ "$errors" -gt 0 ]; then
+  echo "FAILED: Found $errors missing env var(s), $warnings warning(s)."
+  exit 1
+fi
+
+echo "PASSED: Environment variable registry verified ($required_count required, $declared_count declared, $warnings warning(s))."
+exit 0

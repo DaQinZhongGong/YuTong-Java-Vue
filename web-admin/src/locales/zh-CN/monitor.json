@@ -1,0 +1,10 @@
+{
+    "monitor.cache.field.checkedTime":  "检查时间",
+    "monitor.health.page.title":  "健康状态",
+    "monitor.health.field.status":  "总体状态",
+    "monitor.health.field.runMode":  "运行模式",
+    "monitor.cache.page.title":  "缓存监控",
+    "monitor.cache.field.caches":  "缓存实例",
+    "monitor.cache.action.clear":  "清理缓存",
+    "monitor.health.field.components":  "组件状态"
+}

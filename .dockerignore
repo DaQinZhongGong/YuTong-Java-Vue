@@ -1,0 +1,38 @@
+# YuTong .dockerignore
+# Reduce build context size
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+
+# Build outputs
+**/target
+**/dist
+**/build
+**/node_modules
+
+# Docker
+**/Dockerfile
+**/.dockerignore
+
+# Docs (not needed in build context for runtime images)
+YuTong-Java-Docs
+
+# Release evidence
+release-evidence
+
+# Logs
+**/*.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Test reports (regenerated in CI)
+**/surefire-reports
+**/test-results

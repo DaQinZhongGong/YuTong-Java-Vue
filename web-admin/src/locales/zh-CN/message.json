@@ -1,0 +1,14 @@
+{
+    "message.realtime.label":  "实时推送:",
+    "message.field.title":  "标题",
+    "message.field.type":  "类型",
+    "message.field.content":  "内容",
+    "message.field.operation":  "操作",
+    "message.status.unread":  "未读",
+    "message.status.read":  "已读",
+    "message.msg.markRead":  "已标记为已读",
+    "message.msg.newMessage":  "新消息",
+    "message.type.todo":  "待办",
+    "message.type.notification":  "通知",
+    "message.msg.realtimeConnectionError":  "实时推送连接错误，回退 REST 拉取"
+}

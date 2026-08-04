@@ -1,0 +1,12 @@
+{
+    "todo.field.title":  "Title",
+    "todo.field.businessType":  "Business type",
+    "todo.field.priority":  "Priority",
+    "todo.field.dueDate":  "Due date",
+    "todo.field.operation":  "Action",
+    "todo.action.complete":  "Complete",
+    "todo.status.pending":  "Pending",
+    "todo.status.done":  "Completed",
+    "todo.status.cancelled":  "Cancelled",
+    "todo.msg.completed":  "Completed"
+}

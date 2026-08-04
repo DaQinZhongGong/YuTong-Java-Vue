@@ -1,0 +1,15 @@
+﻿diff --git a/dist/vue.runtime.esm.js b/dist/vue.runtime.esm.js
+index ba9c63a..0f52011 100644
+--- a/dist/vue.runtime.esm.js
++++ b/dist/vue.runtime.esm.js
+@@ -5861,6 +5861,10 @@ const updateSlots = (instance, children, optimized) => {
+       } else if (optimized && type === 1) {
+         needDeletionCheck = false;
+       } else {
++        // YuTong patch: slots._ is readonly (def in initSlots); delete before extend in non-optimized path to avoid TypeError
++        if (slots._ !== undefined && !optimized) {
++          delete slots._;
++        }
+         extend(slots, children);
+         if (!optimized && type === 1) {
+           delete slots._;

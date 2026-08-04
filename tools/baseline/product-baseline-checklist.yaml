@@ -1,0 +1,271 @@
+# 100 号商业级产品定义与权威口径基线机器可读清单
+# 设计来源: YuTong-Java-Docs/100-商业级产品定义与权威口径基线/100-商业级产品定义与权威口径基线.md
+# 由 GA2-23-3 落地。本文件由 check_product_baseline.rb 校验。
+# 实际数量口径以 contracts/product-baseline.yaml 为权威来源, 本清单仅做校验规则机器可读化。
+schemaVersion: '1.0.0'
+docId: '100'
+docTitle: '商业级产品定义与权威口径基线'
+docStatus: 'Done'  # GA2-23-3 落地完成
+lifecycle: 'active'
+
+# 权威来源 (100 号文档 "权威来源与冲突处理" 章节, 12 级优先级)
+authorityOrder:
+  - rank: 1
+    source: 'docs/contracts/product-baseline.yaml'
+    scope: '产品、发布、范围、数量和商业声明'
+  - rank: 2
+    source: 'docs/contracts/document-catalog.yaml'
+    scope: '文档语义 ID、领域顺序、依赖、阅读轨道和生命周期'
+  - rank: 3
+    source: 'docs/contracts/technology-baseline.yaml'
+    scope: '技术版本和兼容线'
+  - rank: 4
+    source: 'docs/contracts/registries/routes.yaml'
+    scope: '端、路由、页面、权限、operationId 和版本归属'
+  - rank: 5
+    source: 'docs/contracts/openapi/openapi.yaml'
+    scope: 'HTTP 方法、路径、请求、响应和错误语义'
+  - rank: 6
+    source: 'docs/contracts/registries/operation-policies.yaml'
+    scope: '所有写 operation 的幂等、并发、审计和必填请求字段'
+  - rank: 7
+    source: 'docs/contracts/registries/permissions.yaml、statuses.yaml'
+    scope: '权限和状态枚举'
+  - rank: 8
+    source: 'docs/contracts/data-model.yaml'
+    scope: '表、列、关系、索引和数据生命周期'
+  - rank: 9
+    source: 'docs/contracts/page-field-map.yaml'
+    scope: '页面字段和动作到 API、数据库、权限、测试的映射'
+  - rank: 10
+    source: 'docs/contracts/registries/errors.yaml、events.yaml、asyncapi.yaml'
+    scope: '错误、事件注册表和可生成/校验的消息契约'
+  - rank: 11
+    source: 'docs/contracts/registries/feature-flags.yaml、i18n-catalog.yaml'
+    scope: '渐进发布/应急降级和国际化约束'
+  - rank: 12
+    source: '领域化设计文档'
+    scope: '解释业务规则、交互、工程实现和验收方法;旧物理编号只用于路径兼容'
+
+# 发布术语 (100 号文档 "发布术语" 章节, 7 个版本)
+releaseTaxonomy:
+  - term: 'D0'
+    version: 'design baseline'
+    externalRelease: false
+    meaning: '设计与机器契约完整,不代表已有实现'
+  - term: 'E1'
+    version: 'v0.2'
+    externalRelease: false
+    meaning: '工程底座、构建、环境、迁移、身份适配边界和端侧 Shell'
+  - term: 'E2'
+    version: 'v0.3'
+    externalRelease: false
+    meaning: '系统基础、申请单主流程、Web/移动闭环'
+  - term: 'E3'
+    version: 'v0.4'
+    externalRelease: false
+    meaning: '低代码、AI、安全、审计和回滚集成'
+  - term: 'E4'
+    version: 'v0.5'
+    externalRelease: false
+    meaning: '可观测性、文档站、供应链、性能、运维和发布证据加固'
+  - term: 'RC'
+    version: 'v0.9'
+    externalRelease: false
+    meaning: 'GA 功能完整的发布候选,完成性能、安全、灾备和升级验证'
+  - term: 'GA'
+    version: 'v1.0'
+    externalRelease: true
+    meaning: '通过 C2 或 C3 全部门禁的商业正式版'
+
+# GA 功能范围 (100 号文档 "GA 功能范围" 章节)
+gaScope:
+  mustDeliver:
+    - '一个通过验收的生产身份模式;Mock 和静态全权限只允许 local/test'
+    - '字典、参数、文件、消息、日志、任务、导入导出、健康和缓存管理'
+    - '客户、商品、申请单、明细、附件、审批、待办、消息和统计闭环'
+    - 'Web 管理端与 H5/微信小程序/App 三种 Uniapp 形态的高频移动流程'
+    - '低代码实体、字段、关系、页面、版本、预览、发布、回滚、代码生成任务'
+    - 'AI 助手、RAG 引用、对话历史、白名单工具、人工确认、成本与审计'
+    - 'RAG 的 GA 入库由签名内容清单和受控运维任务完成'
+    - '租户上下文、DataScope、字段脱敏、可观测性、备份恢复、升级兼容、SBOM 和发布证据'
+  designedButNotGA:
+    - '通用 BPMN 设计器'
+    - '高级报表大屏设计器'
+    - '插件市场'
+    - '多数据源管理控制台'
+    - '租户自助知识库/连接器/公开文档入库 API'
+    - '行业业务套件'
+    - '自动写生产数据的 AI Agent'
+
+# 精确数量口径校验规则 (100 号文档 "精确数量口径" 章节)
+# 数量只能从机器契约生成,禁止在页面、WBS、测试或宣传文档中另设数字
+quantityCheckRules:
+  - id: 'QTY-001'
+    name: 'webRouteCount'
+    description: 'Web 路由数量'
+    source: 'contracts/registries/routes.yaml'
+    sourceField: 'routes[endpoint=web]'
+    expectedValue: 22
+    tolerance: 0
+  - id: 'QTY-002'
+    name: 'mobileRouteCount'
+    description: '移动路由数量'
+    source: 'contracts/registries/routes.yaml'
+    sourceField: 'routes[endpoint=mobile]'
+    expectedValue: 9
+    tolerance: 0
+  - id: 'QTY-003'
+    name: 'totalRouteCount'
+    description: '总路由数量'
+    source: 'contracts/registries/routes.yaml'
+    sourceField: 'routes'
+    expectedValue: 31
+    tolerance: 0
+  - id: 'QTY-004'
+    name: 'gaOperationCount'
+    description: 'OpenAPI operation 数量'
+    source: 'contracts/openapi/openapi.yaml'
+    sourceField: 'paths.*.*'
+    expectedValue: 96
+    tolerance: 0
+  - id: 'QTY-005'
+    name: 'dataTableCount'
+    description: '数据表数量'
+    source: 'contracts/data-model.yaml'
+    sourceField: 'tables'
+    expectedValue: 37
+    tolerance: 0
+  - id: 'QTY-006'
+    name: 'i18nCatalogKeyCount'
+    description: 'i18n 文案 key 数量'
+    source: 'contracts/registries/i18n-catalog.yaml'
+    sourceField: 'keys'
+    expectedValue: 296
+    tolerance: 0
+  - id: 'QTY-007'
+    name: 'eventTypeCount'
+    description: '领域事件类型数量'
+    source: 'contracts/registries/events.yaml'
+    sourceField: 'events'
+    expectedValue: 10
+    tolerance: 0
+  - id: 'QTY-008'
+    name: 'writeOperationCount'
+    description: '写 operation 数量'
+    source: 'contracts/registries/operation-policies.yaml'
+    sourceField: 'policies'
+    expectedValue: 56
+    tolerance: 0
+  - id: 'QTY-009'
+    name: 'documentCatalogCount'
+    description: '文档语义目录数量'
+    source: 'contracts/document-catalog.yaml'
+    sourceField: 'documents'
+    expectedValue: 101
+    tolerance: 0
+  - id: 'QTY-010'
+    name: 'asyncapiMessageCount'
+    description: 'AsyncAPI 消息数量'
+    source: 'contracts/asyncapi/asyncapi.yaml'
+    sourceField: 'channels'
+    expectedValue: 10
+    tolerance: 0
+  - id: 'QTY-011'
+    name: 'featureFlagCount'
+    description: '功能开关数量'
+    source: 'contracts/registries/feature-flags.yaml'
+    sourceField: 'flags'
+    expectedValue: 9
+    tolerance: 0
+  - id: 'QTY-012'
+    name: 'totalAiEvaluationCases'
+    description: 'AI 发布评测总数 (RAG 140 + 生成 60 + 安全 30)'
+    source: 'contracts/product-baseline.yaml'
+    sourceField: 'ragEvaluationCases + generationEvaluationCases + securityEvaluationCases'
+    expectedValue: 230
+    tolerance: 0
+
+# 生产身份硬门槛 (100 号文档 "生产身份硬门槛" 章节)
+productionIdentityGate:
+  rule: '每个部署必须且只能选择一个主身份模式'
+  allowedModes:
+    - 'OIDC'
+    - 'SSO'
+    - 'LDAP_AD'
+    - 'CUSTOMER_IAM'
+    - 'LOCAL_IAM_EXTENSION'
+  forbiddenModes:
+    - 'MOCK'
+    - 'STATIC_ALL_PERMISSION'
+  requiredChecks:
+    - '发现/元数据固定'
+    - 'issuer/audience 校验'
+    - '签名算法白名单'
+    - '时钟偏差'
+    - '用户与租户映射'
+    - '组到角色映射'
+    - '权限缓存失效'
+    - '单点退出'
+    - '会话撤销'
+    - '失败审计'
+    - '应急管理员流程'
+
+# 多端导航与跳转口径 (100 号文档 "多端导航与跳转口径" 章节)
+navigationPolicy:
+  - rule: 'Web 与移动端所有消息、扫码和深链持久化 routeId + validatedParams,不持久化任意 URL'
+  - rule: '登录后跳转只接受注册内部路由;Web 使用 redirect,移动使用 returnUrl'
+  - rule: '未登录跳登录,登录后无权限显示无权限页;目标不存在使用渠道回退路由并记录审计'
+  - rule: '移动处理路线固定为 工作台/消息/扫码 -> 待办或详情 -> 处理 -> 服务端成功 -> 返回并刷新'
+  - rule: '平台持久化实体的主键和外键统一为 26 位 ULID string;所有端侧 ID 都保持 string,禁止数值转换'
+
+# 商业发布门禁 (100 号文档 "商业发布门禁" 章节)
+commercialReleaseGate:
+  rule: '商业声明必须选择 C2 或 C3 验收档位。C1 只能称工程底座,不能对外称商业正式版。'
+  acceptanceProfiles:
+    - profile: 'C1'
+      topology: '本地/测试单节点'
+      availability: '不承诺'
+      rpo: '不承诺'
+      rto: '不承诺'
+      releaseRequirement: '仅工程验收;SLSA Build L1 来源证明'
+      commercialRelease: false
+    - profile: 'C2'
+      topology: '应用多实例 + 生产数据库/缓存/对象存储/监控/备份'
+      availability: '99.5%'
+      rpo: '≤1h'
+      rto: '≤2h'
+      releaseRequirement: '可作为私有化商业交付;SLSA Build L2 为最低目标'
+      commercialRelease: true
+    - profile: 'C3'
+      topology: '应用与中间件冗余 + 灾备'
+      availability: '99.9%'
+      rpo: '≤15min'
+      rto: '≤30min'
+      releaseRequirement: '可作为 HA/Cloud 商业交付;SLSA Build L3 目标'
+      commercialRelease: true
+
+# GA 必备证据 (100 号文档 "商业发布门禁" 章节)
+gaEvidenceRequired:
+  - '需求追踪、OpenAPI/AsyncAPI 契约测试'
+  - '数据库迁移与恢复'
+  - '多端视觉/a11y/E2E'
+  - '身份与数据权限安全'
+  - 'NIST AI RMF 风险登记与 OWASP GenAI 测试映射'
+  - '性能容量'
+  - 'SBOM/漏洞扫描/签名来源证明'
+  - '监控告警'
+  - '功能开关回滚'
+  - '灾备演练'
+  - '升级兼容'
+  - 'release manifest'
+  - '未关闭风险清单证据'
+
+# 封板判定 (100 号文档 "封板判定" 章节)
+sealingCriteria:
+  - '机器契约全部可解析'
+  - '路由、operationId、权限、页面映射和数据字段双向覆盖'
+  - 'GA 数量与产品基线一致'
+  - '正文不存在更高优先级冲突'
+  - '质量报告无 P0/P1'
+  - '正式组织签署仍按 74-G0正式评审记录与签署包 执行'

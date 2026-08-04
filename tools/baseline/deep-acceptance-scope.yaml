@@ -1,0 +1,113 @@
+# 89 号封版前深度验收范围机器可读定义
+# 设计来源: YuTong-Java-Docs/89-封版前深度验收报告/89-封版前深度验收报告.md
+# 由 GA2-23-1 落地。本文件是 deep-acceptance-scope 机器可读定义, 由 check-deep-acceptance.rb 校验。
+schemaVersion: '1.0.0'
+docId: '89'
+docTitle: '封版前深度验收报告'
+docStatus: 'Done'  # GA2-23-1 落地完成
+lifecycle: 'historical'
+lastReviewDate: '2026-07-13'
+
+# 8 个验收范围 (89 号文档 "验收范围" 章节)
+acceptanceScopes:
+  - scope: '产品定位与范围'
+    docIds: ['01', '02', '31', '38', '40', '70']
+    focus: '是否对标参考产品能力,是否明确第一版边界、能力裁剪和后续扩展路径'
+    requiredPass: true
+  - scope: '总体架构与技术选型'
+    docIds: ['03', '06', '09', '12', '20', '71']
+    focus: 'boot/cloud 双形态、SpringCloud Alibaba/SpringBoot、PostgreSQL、前端和移动技术是否一致'
+    requiredPass: true
+  - scope: '业务与数据闭环'
+    docIds: ['04', '05', '18', '51', '57', '77']
+    focus: '样例业务、状态机、DDL、ERD、字典、索引和字符串主键是否一致'
+    requiredPass: true
+  - scope: 'API 与端侧设计'
+    docIds: ['08', '10', '11', '27', '53', '54', '55', '56', '66', '78', '91', '92', '93', '94', '95', '96', '97']
+    focus: 'OpenAPI、Web、Uniapp、组件 API、Mock、逐页交互、端侧监控、Figma、权限可见性、字段映射和联调是否可直接分工'
+    requiredPass: true
+  - scope: '低代码与 AI'
+    docIds: ['13', '14', '36', '37', '47', '65']
+    focus: '元模型、代码生成、设计器交互、RAG、工具调用和人工确认是否闭环'
+    requiredPass: true
+  - scope: '工程化与质量'
+    docIds: ['21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '59', '60', '61', '62', '63', '64', '65', '66', '67', '72', '73', '98', '99']
+    focus: '测试、安全、观测、Runbook、性能、SBOM、后端骨架和 CI 证据是否足以指导商业级工程实现'
+    requiredPass: true
+  - scope: '开工与发布治理'
+    docIds: ['39', '49', '60', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99']
+    focus: 'G0 门禁、签署、执行清单、命令模板、验收报告、封版记录、AI 实现总控、端侧交付详设和跨团队闭环是否形成证据链'
+    requiredPass: true
+  - scope: '产品权威与机器契约'
+    docIds: ['100']
+    contractPaths:
+      - 'contracts/product-baseline.yaml'
+      - 'contracts/document-catalog.yaml'
+      - 'contracts/technology-baseline.yaml'
+      - 'contracts/registries/routes.yaml'
+      - 'contracts/openapi/openapi.yaml'
+      - 'contracts/registries/operation-policies.yaml'
+      - 'contracts/registries/permissions.yaml'
+      - 'contracts/registries/statuses.yaml'
+      - 'contracts/data-model.yaml'
+      - 'contracts/page-field-map.yaml'
+      - 'contracts/registries/errors.yaml'
+      - 'contracts/registries/events.yaml'
+      - 'contracts/asyncapi/asyncapi.yaml'
+      - 'contracts/registries/feature-flags.yaml'
+      - 'contracts/registries/i18n-catalog.yaml'
+      - 'contracts/design-manifest.json'
+    focus: '产品范围、发布术语、技术版本、精确数量和全部交叉引用是否可解析、可复算、可追踪'
+    requiredPass: true
+
+# 5 步验收方法 (89 号文档 "验收方法" 章节)
+acceptanceMethod:
+  - step: 1
+    action: '按产品、架构、数据、API、后端、Web、移动端、低代码、AI、商用、运维、安全、验收分组阅读核心设计'
+  - step: 2
+    action: '对跨文档强约束执行一致性扫描,包括主键类型、服务模块名、样例表名、状态枚举、技术选型、文档范围和封版结论'
+  - step: 3
+    action: '对发现的不一致直接修正文档,而不是只在报告中记录问题'
+  - step: 4
+    action: '修正后复扫旧命名、旧服务名、选型摇摆项和 ID 策略冲突'
+  - step: 5
+    action: '最终只给"设计实现基线成熟度"结论,不把文档验收混同为代码实现或上线验收'
+
+# 一致性复扫 6 项检查 (89 号文档 "一致性复扫结论" 章节)
+consistencyRescan:
+  - check: '样例业务命名'
+    expected: '通过'
+    description: '未再发现 sample_apply* 旧命名'
+  - check: '服务模块命名'
+    expected: '通过'
+    description: '03、07、09、52 对新增服务模块已保持一致'
+  - check: '技术选型明确性'
+    expected: '通过'
+    description: '第一版核心选型已由"或"收敛为明确方案,候选项仅作为后续扩展说明'
+  - check: '字符串主键策略'
+    expected: '通过'
+    description: 'Long id、bigint、serial 等命中均属于禁止项、检查项或反例语境'
+  - check: '状态机与字典'
+    expected: '通过'
+    description: 'DRAFT、SUBMITTED、APPROVED、REJECTED、ARCHIVED 在业务、数据、API、UI、测试中一致'
+  - check: '封版范围'
+    expected: '通过'
+    description: '01~85 为设计基线, 86~87 执行模板, 88 封版记录, 89 深度验收, 90 AI 实现总控, 91~96 端侧详设, 97~99 跨团队闭环'
+
+# 当前验收结论 (89 号文档 "当前验收结论" 章节)
+currentVerdict:
+  maturityLevel: 'DESIGN_CONTENT_READY_FOR_G0'
+  candidateBaseline: 'D0-commercial-design-baseline-candidate'
+  canEnterG0: true
+  canEnterP2: false  # 需 74 签署 + manifest 固定 + 生产身份选择 + C2/C3 目标档位
+  conditionsForP2:
+    - '74 状态达到 SIGNED_PASS, 或 SIGNED_CONDITIONAL_PASS 且 P1 关闭条件明确'
+    - '归档 design-manifest.json hash'
+    - '选择生产身份模式 (OIDC/SSO/LDAP_AD/CUSTOMER_IAM/LOCAL_IAM_EXTENSION)'
+    - '选择 C2 或 C3 目标档位'
+  authorityOrder:
+    - '100 + contracts'
+    - '74 签署快照'
+    - '23 任务追踪'
+    - '79 证据归档'
+    - '90 偏差控制'

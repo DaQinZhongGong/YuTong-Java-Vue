@@ -1,0 +1,31 @@
+{
+  "name": "YuTong",
+  "appid": "__UNI__YUTONG",
+  "description": "YuTong Mobile App",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "h5": {
+    "devServer": {
+      "port": 20060,
+      "proxy": {
+        "/api": {
+          "target": "http://localhost:20010",
+          "changeOrigin": true,
+          "secure": false
+        }
+      }
+    },
+    "router": {
+      "mode": "hash"
+    },
+    "title": "YuTong"
+  },
+  "mp-weixin": {
+    "appid": "",
+    "setting": {
+      "urlCheck": false
+    },
+    "usingComponents": true
+  }
+}

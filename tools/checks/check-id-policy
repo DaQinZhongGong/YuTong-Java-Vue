@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Check ID policy: ULID varchar(32) primary keys
+# Design: 05-数据架构设计, 52-通用编码规范, 99-CI流水线与发布证据自动化详设
+# Usage: bash tools/checks/check-id-policy
+# Checks:
+#   1. All DDL CREATE TABLE must have id varchar(32) PRIMARY KEY
+#   2. No SERIAL/BIGSERIAL auto-increment (covered by check-no-autoincrement)
+#   3. Java entities use @TableId(type=INPUT) or IdGenerator
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+MIGRATIONS_DIR="$PROJECT_ROOT/database/migrations"
+
+if [ ! -d "$MIGRATIONS_DIR" ]; then
+  echo "ERROR: migrations directory not found"
+  exit 1
+fi
+
+errors=0
+
+# Check DDL: every CREATE TABLE must have id varchar(32) PRIMARY KEY
+# Skip system tables (flyway_schema_history, sys_*, r__seed)
+for sql_file in "$MIGRATIONS_DIR"/*.sql; do
+  [ -f "$sql_file" ] || continue
+  # Extract CREATE TABLE blocks
+  tables=$(grep -inE 'CREATE TABLE' "$sql_file" | grep -v 'IF NOT EXISTS.*flyway' || true)
+  if [ -z "$tables" ]; then continue; fi
+
+  # Check each table has varchar(32) PK
+  # Look for lines containing PRIMARY KEY that reference id
+  while IFS= read -r line; do
+    table_name=$(echo "$line" | grep -oE 'CREATE TABLE[^(]+' | sed 's/CREATE TABLE//; s/IF NOT EXISTS//; s/ //g' || true)
+    [ -z "$table_name" ] && continue
+    # Skip dictionary/parameter tables that use composite PK (handled by design)
+    # But all biz tables must have id varchar(32)
+    # Check for id varchar(26) or varchar(32) declaration (ULID standard)
+    if ! grep -qiE "id\s+varchar\((26|32)\)" "$sql_file"; then
+      # Some tables may not have id column (relation tables) - skip if no id column at all
+      if grep -qiE "^\s*id\s+" "$sql_file"; then
+        echo "VIOLATION: $table_name in $(basename "$sql_file") has id column but not varchar(32)"
+        errors=$((errors + 1))
+      fi
+    fi
+  done <<< "$tables"
+done
+
+# Check Java entities: @TableId must be INPUT type (not AUTO)
+java_entities=$(find "$PROJECT_ROOT/backend" -name "*.java" -path "*/domain/*" 2>/dev/null || true)
+for java_file in $java_entities; do
+  # Check if file has @TableId
+  if grep -q "@TableId" "$java_file" 2>/dev/null; then
+    # Must have type = IdType.INPUT
+    if ! grep -qE "@TableId.*IdType\.(INPUT|ASSIGN_UUID|ASSIGN_ID)" "$java_file" 2>/dev/null; then
+      if grep -qE "@TableId.*IdType\.AUTO" "$java_file" 2>/dev/null; then
+        echo "VIOLATION: $(basename "$java_file") uses @TableId(IdType.AUTO) - must use INPUT"
+        errors=$((errors + 1))
+      fi
+    fi
+  fi
+done
+
+if [ "$errors" -gt 0 ]; then
+  echo ""
+  echo "FAILED: Found $errors ID policy violation(s)."
+  echo "Design requires: id varchar(32) ULID, @TableId(IdType.INPUT)"
+  exit 1
+fi
+
+echo "PASSED: ID policy (varchar(32) ULID) conformance verified."
+exit 0

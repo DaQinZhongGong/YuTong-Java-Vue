@@ -1,0 +1,681 @@
+schemaVersion: 1.0.0
+artifactId: yutong-wbs-baseline
+basedOn: docs/61-实现任务WBS与排期基线/61-实现任务WBS与排期基线.md
+purpose: >
+  Machine-readable Work Breakdown Structure (WBS) baseline aligned with 61 design document.
+  Each WBS task must be schedulable, assignable, verifiable, and traceable to design docId,
+  code directory, OpenAPI operationId, test case id and acceptance evidence. Coding must not
+  start before WBS boundaries are confirmed. Updates must be written back to 23 tracking record.
+linkedTrackingRecord: docs/23-设计到落地追踪记录/23-设计到落地追踪记录.md
+linkedProductBaseline: docs/contracts/product-baseline.yaml
+linkedOperationPolicies: docs/contracts/registries/operation-policies.yaml
+linkedOpenApi: docs/contracts/openapi/openapi.yaml
+linkedDesignFreeze: docs/39-实现基线冻结与开工准入检查/39-实现基线冻结与开工准入检查.md
+linkedG0Gate: docs/49-顶尖产品对标设计完备性门禁/49-顶尖产品对标设计完备性门禁.md
+releaseTaxonomyAlignment:
+  source: docs/contracts/product-baseline.yaml releaseTaxonomy
+  mapping:
+    E1: {version: v0.2, name: Engineering foundation, wbsPrefix: P2}
+    E2: {version: v0.3, name: Core vertical slice, wbsPrefix: P3}
+    E3: {version: v0.4, name: Platform capability integration, wbsPrefix: P4}
+    E4: {version: v0.5, name: Engineering hardening, wbsPrefix: P5}
+    RC: {version: v0.9, name: Release candidate, wbsPrefix: RC}
+    GA: {version: v1.0, name: Commercial general availability, wbsPrefix: GA}
+versionSlices:
+  - version: v0.2
+    goal: P2 基础工程
+    periodWeeks: 2
+    wbsIds: [P2-01, P2-02, P2-03, P2-04, P2-05, P2-06, P2-07, P2-08, P2-09]
+  - version: v0.3
+    goal: P3 样例业务闭环
+    periodWeeks: 3
+    wbsIds: [P3-01, P3-02, P3-03, P3-04, P3-05, P3-06, P3-07, P3-08]
+  - version: v0.4
+    goal: P4 低代码 + AI 初版
+    periodWeeks: 3
+    wbsIds: [P4-01, P4-02, P4-03, P4-04, P4-05, P4-06, P4-07, P4-08]
+  - version: v0.5
+    goal: P5 工程化增强
+    periodWeeks: 2
+    wbsIds: [P5-01, P5-02, P5-03, P5-04, P5-05]
+  - version: v1.0
+    goal: C2 或 C3 商业正式版收敛与签署
+    periodWeeks: 4
+    wbsIds: []
+    notes: 61 号文档未在 v1.0/GA 列出独立 WBS 任务，GA 收敛由 79（首版发布验收包）+ 100（产品权威基线）+ GA2-53 G0 评审报告联合覆盖，4 个 P1 问题关闭后即可启动
+notInV02V03:
+  - itemId: NOT-V02-01
+    title: BPMN 设计器实现
+    docId: '41'
+    docPath: docs/41-工作流引擎与BPMN设计器详设/41-工作流引擎与BPMN设计器详设.md
+    deferredTo: v1.1+
+    alignedWith39: true
+    alignedWith49: true
+    status: extended
+    actualImplementation: LightWorkflowEngine（轻量自研工作流引擎；路由 /workflow/definitions、/workflow/instances、/workflow/todo 已落地）
+    notes: 39 号文档明确实现 v1.1+；49 号 G0 与实现分期关系表对齐 v1.1~v1.5。2026-07-31 状态同步：实际已实现为 extended
+  - itemId: NOT-V02-02
+    title: 报表大屏设计器实现
+    docId: '42'
+    docPath: docs/42-报表大屏设计器详设/42-报表大屏设计器详设.md
+    deferredTo: v1.5
+    alignedWith39: true
+    alignedWith49: true
+    status: extended
+    actualImplementation: ReportController/DashboardController（报表与大屏；路由 /reports、/dashboards、/report-designer/:id、/dashboard-designer/:id 已落地）
+    notes: 39 号文档明确实现 v1.5；49 号 v1.0 基础图 v1.5 设计器。2026-07-31 状态同步：实际已实现为 extended
+  - itemId: NOT-V02-03
+    title: 插件市场实现
+    docId: '45'
+    docPath: docs/45-插件与模板生态设计/45-插件与模板生态设计.md
+    deferredTo: v2.0
+    alignedWith39: true
+    alignedWith49: true
+    status: extended
+    actualImplementation: PluginController（插件与模板生态；路由 /plugins、/templates、/plugin-market、/plugin-registries、/code-templates 已落地）
+    notes: 39 号文档明确实现 v2.0；49 号 G0 与实现分期关系表对齐 v2.0。2026-07-31 状态同步：实际已实现为 extended
+  - itemId: NOT-V02-04
+    title: 多数据源管理实现
+    docId: '46'
+    docPath: docs/46-多数据源与数据集设计/46-多数据源与数据集设计.md
+    deferredTo: v1.5
+    alignedWith39: true
+    alignedWith49: true
+    status: extended
+    actualImplementation: DataSourceController（多数据源与元数据浏览；路由 /datasources、/datasources/:code/metadata 已落地）
+    notes: 39 号文档明确实现 v1.5；49 号 G0 与实现分期关系表对齐 v1.5。注意 GA2-46 已落地 v1.5 提前完成。2026-07-31 状态同步：实际已实现为 extended
+  - itemId: NOT-V02-05
+    title: 完整 RBAC 后台
+    docId: '32'
+    docPath: docs/32-企业级权限与租户接入方案/32-企业级权限与租户接入方案.md
+    deferredTo: v1.5+
+    alignedWith39: true
+    alignedWith49: true
+    status: deferred
+    notes: 39 号文档不作为 E1/E2 强制；49 号 G0 与实现分期关系表对齐 v1.5+。v0.2~v0.4 使用 Mock AuthAdapter 边界。2026-07-31 状态同步：真正未实现，保持 deferred
+boundaryConsistencyWith39And49:
+  rule: 61 号文档 5 项不进入 v0.2/v0.3 任务必须与 39 号文档「不进入 E1/E2 强制实现能力」清单和 49 号文档「G0 与实现分期关系表」对齐
+  checks:
+    - itemId: NOT-V02-01
+      doc39Section: 不进入 E1/E2 强制实现的能力 (BPMN 工作流设计器与引擎 实现见 41，实现 v1.1+)
+      doc49Section: G0 与实现分期关系表 (41 工作流 v1.1~v1.5)
+      status: ALIGNED
+    - itemId: NOT-V02-02
+      doc39Section: 不进入 E1/E2 强制实现的能力 (报表大屏设计器 设计见 42，实现 v1.5)
+      doc49Section: G0 与实现分期关系表 (42 报表大屏 v1.0 基础图 v1.5 设计器)
+      status: ALIGNED
+    - itemId: NOT-V02-03
+      doc39Section: 不进入 E1/E2 强制实现的能力 (插件市场和模板市场 设计见 45，实现 v2.0)
+      doc49Section: G0 与实现分期关系表 (45 插件生态 v2.0)
+      status: ALIGNED
+    - itemId: NOT-V02-04
+      doc39Section: 不进入 E1/E2 强制实现的能力 (多数据源平台 设计见 46，实现 v1.5)
+      doc49Section: G0 与实现分期关系表 (46 多数据源 v1.5)
+      status: ALIGNED
+    - itemId: NOT-V02-05
+      doc39Section: 不进入 E1/E2 强制实现的能力 (完整 RBAC 后台 设计见 32)
+      doc49Section: G0 与实现分期关系表 (32 完整 RBAC 后台 v1.5+)
+      status: ALIGNED
+wbsTasks:
+  # ============================================================
+  # v0.2 WBS：基础工程（P2-01 ~ P2-09）
+  # ============================================================
+  - wbsId: P2-01
+    version: v0.2
+    title: 仓库目录与 Maven 父工程
+    role: 后端
+    inputDocs:
+      - {docId: '07', path: docs/07-项目源代码目录层级详细设计/07-项目源代码目录层级详细设计.md}
+      - {docId: '52', path: docs/52-后端服务分工与接口实现详设/52-后端服务分工与接口实现详设.md}
+    output: backend 多模块结构
+    acceptance: 可编译
+    codeDirectory: backend/
+    openApiOperationIds: []
+    testCaseIds: [TC-P2-BOOT-001]
+    evidence: release-evidence/v1.0.0/01-functional/smoke-test-report.md
+    trackingRecordRow: 23-设计到落地追踪记录 line 23 (07 总体目录)
+    status: Done
+    notes: backend/pom.xml 父工程 + 8 子模块（yutong-common/yutong-infra/yutong-auth-adapter/yutong-api/yutong-system-service/yutong-sample-service/yutong-lowcode-service/yutong-ai-service/yutong-boot）
+  - wbsId: P2-02
+    version: v0.2
+    title: Docker Compose 依赖
+    role: DevOps
+    inputDocs:
+      - {docId: '20', path: docs/20-DevOps与CI-CD部署设计/20-DevOps与CI-CD部署设计.md}
+      - {docId: '25', path: docs/25-本地启动与开发环境搭建指南/25-本地启动与开发环境搭建指南.md}
+    output: PostgreSQL/Redis/MinIO 容器编排
+    acceptance: 健康检查通过
+    codeDirectory: deploy/docker-compose.run.yml
+    openApiOperationIds: []
+    testCaseIds: [TC-P2-DB-001, TC-P2-DB-002]
+    evidence: release-evidence/v1.0.0/ga2-49-evidence.md
+    trackingRecordRow: 23 号 line 25 (25 本地启动)
+    status: Done
+    notes: yutong 前缀容器命名规则（yutong-postgres 5433→5432、yutong-redis 6380→6379、yutong-minio 9000-9001）
+  - wbsId: P2-03
+    version: v0.2
+    title: yutong-common 公共模块
+    role: 后端
+    inputDocs:
+      - {docId: '48', path: docs/48-错误码注册表与API契约详设/48-错误码注册表与API契约详设.md}
+      - {docId: '52', path: docs/52-后端服务分工与接口实现详设/52-后端服务分工与接口实现详设.md}
+    output: 响应/异常/ID 公共模块
+    acceptance: 单元测试通过
+    codeDirectory: backend/yutong-common/
+    openApiOperationIds: []
+    testCaseIds: [TC-P2-ID-001]
+    evidence: release-evidence/v1.0.0/ga2-52-evidence.md
+    trackingRecordRow: 23 号 line 89 (48 错误码契约)
+    status: Done
+    notes: Result/PageResult/ErrorCode 50 枚举/IdGenerator ULID/BusinessException/DataScopeDeniedException/Idempotent 注解/TraceContext
+  - wbsId: P2-04
+    version: v0.2
+    title: Flyway V001~V003 系统+样例表迁移
+    role: 后端/DB
+    inputDocs:
+      - {docId: '51', path: docs/51-数据库物理模型与DDL详设/51-数据库物理模型与DDL详设.md}
+      - {docId: '57', path: docs/57-完整DDL清单与数据字典详设/57-完整DDL清单与数据字典详设.md}
+    output: 系统表+样例表 Flyway 迁移
+    acceptance: 迁移通过
+    codeDirectory: backend/yutong-boot/src/main/resources/db/migration/
+    openApiOperationIds: []
+    testCaseIds: [TC-P2-DB-001, TC-P2-DB-002]
+    evidence: release-evidence/v1.0.0/ga2-49-evidence.md
+    trackingRecordRow: 23 号 line 108 (51 数据库物理模型) + line 114 (57 完整 DDL)
+    status: Done
+    notes: V001~V023 共 30 条 Flyway 迁移全部 success，覆盖 83 张表（38 必备 + 45 顶尖对标预留），主键全 varchar(32) ULID
+  - wbsId: P2-05
+    version: v0.2
+    title: yutong-boot 单体启动器
+    role: 后端
+    inputDocs:
+      - {docId: '03', path: docs/03-总体架构设计/03-总体架构设计.md}
+      - {docId: '09', path: docs/09-Java后端设计/09-Java后端设计.md}
+    output: 单体启动 + 健康检查
+    acceptance: /actuator/health 返回 UP
+    codeDirectory: backend/yutong-boot/
+    openApiOperationIds: []
+    testCaseIds: [TC-P2-BOOT-001, TC-P2-API-001]
+    evidence: release-evidence/v1.0.0/01-functional/smoke-test-report.md
+    trackingRecordRow: 23 号 line 5 (03 总体架构) + line 11 (09 Java 后端)
+    status: Done
+    notes: YutongApplication + application.yml + GlobalExceptionHandler + I18nConfig + OpenApiConfig + JacksonConfig + AuditableAspect + IdempotentAspect + RequiresPermissionAspect + TraceAuthFilter
+  - wbsId: P2-06
+    version: v0.2
+    title: Mock Auth 鉴权
+    role: 后端
+    inputDocs:
+      - {docId: '15', path: docs/15-权限接入边界设计/15-权限接入边界设计.md}
+      - {docId: '32', path: docs/32-企业级权限与租户接入方案/32-企业级权限与租户接入方案.md}
+    output: login/user/menus 接口
+    acceptance: 登录可用
+    codeDirectory: backend/yutong-auth-adapter/
+    openApiOperationIds: [login, logout, getCurrentUser, getCurrentUserMenus, getCurrentUserPermissions]
+    testCaseIds: [TC-P2-AUTH-001, TC-SEC-AUTH-001]
+    evidence: release-evidence/v1.0.0/02-api-contract/ic-smoke-result-ga2-16.md
+    trackingRecordRow: 23 号 line 17 (15 权限接入) + line 36 (32 企业级权限)
+    status: Done
+    notes: MockAuthAdapter 4 类 Mock 用户（admin/biz/approver/viewer）+ X-Mock-User 请求头 + AuthContext + DataScopeResolver + RequiresPermission + PublicEndpoint
+  - wbsId: P2-07
+    version: v0.2
+    title: Web Shell 前端骨架
+    role: 前端
+    inputDocs:
+      - {docId: '50', path: docs/50-设计系统与视觉规范详设/50-设计系统与视觉规范详设.md}
+      - {docId: '53', path: docs/53-Web管理端页面级分工详设/53-Web管理端页面级分工详设.md}
+    output: 登录/布局/路由
+    acceptance: 页面可打开
+    codeDirectory: web-admin/
+    openApiOperationIds: []
+    testCaseIds: [TC-E2E-WEB-LOGIN-001]
+    evidence: release-evidence/v1.0.0/01-functional/smoke-test-report.md
+    trackingRecordRow: 23 号 line 60 (50 设计系统 Ready) + line 63 (53 Web 页面 Ready)
+    status: Done
+    notes: Vue 3.5 + TypeScript 6 + Vite 8.1 + Element Plus + Pinia + vue-router 18 路由 + DefaultLayout + LoginView + 工作台
+  - wbsId: P2-08
+    version: v0.2
+    title: Mobile Shell 移动端骨架
+    role: 移动端
+    inputDocs:
+      - {docId: '50', path: docs/50-设计系统与视觉规范详设/50-设计系统与视觉规范详设.md}
+      - {docId: '54', path: docs/54-Uniapp移动端页面级分工详设/54-Uniapp移动端页面级分工详设.md}
+    output: 登录/工作台
+    acceptance: H5 可打开
+    codeDirectory: mobile-uniapp/
+    openApiOperationIds: []
+    testCaseIds: [TC-E2E-MOBILE-LOGIN-001]
+    evidence: release-evidence/v1.0.0/09-mobile-ui/
+    trackingRecordRow: 23 号 line 64 (54 移动端分工)
+    status: Done
+    notes: Uniapp + Vue 3 + 9 路由清单 + 3 分包配置 + 5 组件 + 9 页面全部对接 /mobile/* 真实 API
+  - wbsId: P2-09
+    version: v0.2
+    title: OpenAPI/Mock 契约
+    role: 全端
+    inputDocs:
+      - {docId: '55', path: docs/55-OpenAPI接口Schema与Mock详设/55-OpenAPI接口Schema与Mock详设.md}
+    output: Schema + Mock 服务
+    acceptance: 类型生成通过
+    codeDirectory: YuTong-Java-Docs/contracts/openapi/openapi.yaml
+    openApiOperationIds: [all-96-operationIds]
+    testCaseIds: [TC-P2-API-001]
+    evidence: release-evidence/v1.0.0/ga2-51-evidence.md
+    trackingRecordRow: 23 号 line 65 (55 OpenAPI Ready)
+    status: Done
+    notes: 96 个 operationId 全部注册 + x-stage 版本标记 + x-task-id + x-permission + x-error-codes 双向对齐 errors.yaml
+  # ============================================================
+  # v0.3 WBS：样例业务闭环（P3-01 ~ P3-08）
+  # ============================================================
+  - wbsId: P3-01
+    version: v0.3
+    title: 字典/参数配置
+    role: 后端+前端
+    inputDocs:
+      - {docId: '17', path: docs/17-基础后台模块详细设计/17-基础后台模块详细设计.md}
+      - {docId: '52', path: docs/52-后端服务分工与接口实现详设/52-后端服务分工与接口实现详设.md}
+      - {docId: '53', path: docs/53-Web管理端页面级分工详设/53-Web管理端页面级分工详设.md}
+    output: 字典/参数 CRUD 页面
+    acceptance: 缓存刷新生效
+    codeDirectory: backend/yutong-system-service/src/main/java/com/yutong/system/dict/ + web-admin/src/views/system/dict/
+    openApiOperationIds: [listDictTypes, createDictType, updateDictType, deleteDictType, listDictItems, createDictItem, updateDictItem, deleteDictItem, listEnabledDictItemsByType, listConfigs, createConfig, refreshConfigCache, getConfig, updateConfig, deleteConfig]
+    testCaseIds: [TC-P3-DICT-001, TC-P3-CONFIG-001]
+    evidence: release-evidence/v1.0.0/01-functional/smoke-test-report.md
+    trackingRecordRow: 23 号 line 20 (17 基础后台)
+    status: Done
+    notes: DictType/DictItem 9 operation + Config 6 operation + 缓存刷新 + i18n + a11y
+  - wbsId: P3-02
+    version: v0.3
+    title: 文件管理
+    role: 后端+前端
+    inputDocs:
+      - {docId: '17', path: docs/17-基础后台模块详细设计/17-基础后台模块详细设计.md}
+      - {docId: '52', path: docs/52-后端服务分工与接口实现详设/52-后端服务分工与接口实现详设.md}
+    output: 上传/绑定/预览/下载
+    acceptance: MinIO 可用
+    codeDirectory: backend/yutong-system-service/src/main/java/com/yutong/system/file/ + web-admin/src/views/system/file/
+    openApiOperationIds: [uploadFile, listFiles, bindFile, deleteFile, downloadFile, previewFile]
+    testCaseIds: [TC-P3-FILE-001, TC-SEC-FILE-001]
+    evidence: release-evidence/v1.0.0/02-api-contract/ic-smoke-result-ga2-16.md
+    trackingRecordRow: 23 号 line 20 (17 基础后台)
+    status: Done
+    notes: MinIO 适配器 + 上传 multipart + 绑定业务对象 + 下载 + 预览 + 软删除 + 权限码 system:file:*
+  - wbsId: P3-03
+    version: v0.3
+    title: 客户/商品主数据
+    role: 后端+前端
+    inputDocs:
+      - {docId: '18', path: docs/18-样例业务详细设计/18-样例业务详细设计.md}
+      - {docId: '58', path: docs/58-后端API逐接口任务清单/58-后端API逐接口任务清单.md}
+    output: 客户/商品 CRUD
+    acceptance: 编码唯一约束
+    codeDirectory: backend/yutong-sample-service/src/main/java/com/yutong/sample/masterdata/ + web-admin/src/views/biz/customer/ + web-admin/src/views/biz/product/
+    openApiOperationIds: [listCustomers, createCustomer, getCustomer, updateCustomer, deleteCustomer, importCustomers, exportCustomers, listProducts, createProduct, getProduct, updateProduct, deleteProduct, importProducts, exportProducts]
+    testCaseIds: [TC-P3-CUS-001, TC-P3-CUS-002, TC-P3-PROD-001]
+    evidence: release-evidence/v1.0.0/ga2-52-evidence.md
+    trackingRecordRow: 23 号 line 21 (18 样例业务)
+    status: Done
+    notes: Customer/Product domain + mapper + service + controller + 14 operation + 编码唯一约束 + DataScope + 软删除 + 导入导出异步任务
+  - wbsId: P3-04
+    version: v0.3
+    title: 申请单后端状态机
+    role: 后端
+    inputDocs:
+      - {docId: '18', path: docs/18-样例业务详细设计/18-样例业务详细设计.md}
+      - {docId: '52', path: docs/52-后端服务分工与接口实现详设/52-后端服务分工与接口实现详设.md}
+      - {docId: '58', path: docs/58-后端API逐接口任务清单/58-后端API逐接口任务清单.md}
+    output: 申请单状态机 API
+    acceptance: 单元测试 + 状态机校验
+    codeDirectory: backend/yutong-sample-service/src/main/java/com/yutong/sample/request/
+    openApiOperationIds: [createBizRequest, updateBizRequest, deleteBizRequest, submitBizRequest, approveBizRequest, rejectBizRequest, withdrawBizRequest, archiveBizRequest, exportBizRequests, importBizRequests]
+    testCaseIds: [TC-P3-REQ-001, TC-P3-REQ-002, TC-P3-REQ-003, TC-P3-REQ-004, TC-P3-REQ-005, TC-P3-REQ-006, TC-P3-REQ-007, TC-P3-REQ-008]
+    evidence: release-evidence/v1.0.0/ga2-52-evidence.md
+    trackingRecordRow: 23 号 line 21 (18 样例业务) + line 115 (58 API 逐接口)
+    status: Done
+    notes: BizRequest/BizRequestItem/ApprovalRecord/Sequence domain + 10 operation + 5 状态机 (DRAFT/SUBMITTED/APPROVED/REJECTED/ARCHIVED) + workflowAction policy + 乐观锁 + DataScope + 审批记录事件
+  - wbsId: P3-05
+    version: v0.3
+    title: 申请单 Web 前端
+    role: 前端
+    inputDocs:
+      - {docId: '53', path: docs/53-Web管理端页面级分工详设/53-Web管理端页面级分工详设.md}
+      - {docId: '56', path: docs/56-UI逐屏线框与交互验收详设/56-UI逐屏线框与交互验收详设.md}
+    output: 列表/表单/详情
+    acceptance: E2E 流程通过
+    codeDirectory: web-admin/src/views/biz/request/
+    openApiOperationIds: []
+    testCaseIds: [TC-E2E-WEB-REQ-001, TC-E2E-WEB-REQ-002]
+    evidence: release-evidence/v1.0.0/01-functional/smoke-test-report.md
+    trackingRecordRow: 23 号 line 63 (53 Web 页面 Ready) + line 66 (56 UI 逐屏 Ready)
+    status: Done
+    notes: RequestList 分页+keyset 翻页 + RequestForm 表单+明细+审批意见 + RequestDetail 详情+审批记录+底部操作栏 + DataScope 脱敏
+  - wbsId: P3-06
+    version: v0.3
+    title: 移动端待办
+    role: 移动端
+    inputDocs:
+      - {docId: '54', path: docs/54-Uniapp移动端页面级分工详设/54-Uniapp移动端页面级分工详设.md}
+      - {docId: '56', path: docs/56-UI逐屏线框与交互验收详设/56-UI逐屏线框与交互验收详设.md}
+    output: 待办/详情/审核
+    acceptance: E2E 流程通过
+    codeDirectory: mobile-uniapp/src/pages/biz/
+    openApiOperationIds: [approveMobileBizRequest, rejectMobileBizRequest]
+    testCaseIds: [TC-E2E-MOBILE-REQ-001, TC-E2E-MOBILE-REQ-002]
+    evidence: release-evidence/v1.0.0/09-mobile-ui/
+    trackingRecordRow: 23 号 line 64 (54 移动端分工)
+    status: Done
+    notes: 待办列表下拉刷新+状态筛选 + 详情基本信息+明细+审批记录 + 审核通过/驳回底部操作栏 + 4/4 API 冒烟 PASS
+  - wbsId: P3-07
+    version: v0.3
+    title: 消息/导出任务
+    role: 后端+前端
+    inputDocs:
+      - {docId: '44', path: docs/44-实时通信与消息推送设计/44-实时通信与消息推送设计.md}
+      - {docId: '58', path: docs/58-后端API逐接口任务清单/58-后端API逐接口任务清单.md}
+    output: 消息推送+任务进度
+    acceptance: 事件触发正确
+    codeDirectory: backend/yutong-system-service/src/main/java/com/yutong/system/notification/ + backend/yutong-system-service/src/main/java/com/yutong/system/importexport/
+    openApiOperationIds: [markAllMessagesRead, markMessageRead, retryJob, retryImportExportTask]
+    testCaseIds: [TC-P3-MSG-001, TC-P3-JOB-001]
+    evidence: release-evidence/v1.0.0/ga2-52-evidence.md
+    trackingRecordRow: 23 号 line 51 (44 实时推送)
+    status: Done
+    notes: WebSocket /ws/v1 + RealtimeEnvelope 8 type + PushService + RealtimeEventListener 事务后推送 + 前端 realtime.ts 单例客户端 + 导入导出任务异步执行 + 重试
+  - wbsId: P3-08
+    version: v0.3
+    title: 测试矩阵 v0.3 验收
+    role: 测试
+    inputDocs:
+      - {docId: '59', path: docs/59-测试矩阵与验收用例详设/59-测试矩阵与验收用例详设.md}
+    output: TC-P3 全通过报告
+    acceptance: 测试矩阵报告归档
+    codeDirectory: tools/test/verify-test-matrix.ps1
+    openApiOperationIds: []
+    testCaseIds: [TC-P3-CUS-001, TC-P3-CUS-002, TC-P3-PROD-001, TC-P3-REQ-001~008, TC-P3-FILE-001, TC-P3-JOB-001, TC-P3-MSG-001]
+    evidence: release-evidence/v1.0.0/ga2-52-smoke.txt
+    trackingRecordRow: 23 号 line 116 (59 测试矩阵)
+    status: Done
+    notes: GA2-52 验收脚本 15 项检查 12 PASS + 0 FAIL + 3 WARN（已知偏差登记）
+  # ============================================================
+  # v0.4 WBS：低代码 + AI 初版（P4-01 ~ P4-08）
+  # ============================================================
+  - wbsId: P4-01
+    version: v0.4
+    title: 低代码元模型表 V4 迁移
+    role: 后端/DB
+    inputDocs:
+      - {docId: '14', path: docs/14-低代码平台设计/14-低代码平台设计.md}
+      - {docId: '57', path: docs/57-完整DDL清单与数据字典详设/57-完整DDL清单与数据字典详设.md}
+    output: lc_entity/lc_field/lc_relation/lc_action/lc_page/lc_component/lc_generator_task 表
+    acceptance: Flyway 迁移通过
+    codeDirectory: backend/yutong-boot/src/main/resources/db/migration/V004__lowcode_tables.sql
+    openApiOperationIds: []
+    testCaseIds: [TC-P2-DB-001]
+    evidence: release-evidence/v1.0.0/ga2-49-evidence.md
+    trackingRecordRow: 23 号 line 16 (14 低代码) + line 114 (57 完整 DDL)
+    status: Done
+    notes: 7 张低代码元模型表 + partial unique index where deleted=false + tenant_id + 通用审计字段 + 主键 varchar(32)
+  - wbsId: P4-02
+    version: v0.4
+    title: 实体设计器 API
+    role: 后端
+    inputDocs:
+      - {docId: '52', path: docs/52-后端服务分工与接口实现详设/52-后端服务分工与接口实现详设.md}
+      - {docId: '58', path: docs/58-后端API逐接口任务清单/58-后端API逐接口任务清单.md}
+    output: lc_entity API
+    acceptance: 单元测试通过
+    codeDirectory: backend/yutong-lowcode-service/src/main/java/com/yutong/lowcode/meta/
+    openApiOperationIds: [createLowcodeEntityDraft, updateLowcodeEntity, deleteLowcodeEntity, publishLowcodeEntity]
+    testCaseIds: [TC-P4-ENTITY-001, TC-P4-ENTITY-002]
+    evidence: release-evidence/v1.0.0/02-api-contract/ic-smoke-result-ga2-16.md
+    trackingRecordRow: 23 号 line 16 (14 低代码) + line 115 (58 API 逐接口)
+    status: Done
+    notes: LcEntity/LcField/LcRelation/LcAction domain + LcEntityApplicationService + LcDomainService + ConfigHashService + 4 operation + lowcodeDraftCreate/Update/Publish 策略
+  - wbsId: P4-03
+    version: v0.4
+    title: 实体设计器 UI
+    role: 前端
+    inputDocs:
+      - {docId: '47', path: docs/47-低代码设计器交互详设/47-低代码设计器交互详设.md}
+      - {docId: '56', path: docs/56-UI逐屏线框与交互验收详设/56-UI逐屏线框与交互验收详设.md}
+    output: 字段设计 + 关系设计 + 操作设计
+    acceptance: 可发布实体
+    codeDirectory: web-admin/src/views/lowcode/LcEntityList.vue + web-admin/src/views/lowcode/LcEntityDesigner.vue
+    openApiOperationIds: []
+    testCaseIds: [TC-E2E-LOWCODE-ENTITY-001]
+    evidence: release-evidence/v1.0.0/ga2-47-evidence.md
+    trackingRecordRow: 23 号 line 49 (47 低代码设计器交互)
+    status: Done
+    notes: 实体设计器 + 字段配置 + 关系配置 + 操作配置 + 版本历史 + 草稿/发布 + configHash 乐观锁
+  - wbsId: P4-04
+    version: v0.4
+    title: 页面设计器 UI
+    role: 前端
+    inputDocs:
+      - {docId: '47', path: docs/47-低代码设计器交互详设/47-低代码设计器交互详设.md}
+      - {docId: '56', path: docs/56-UI逐屏线框与交互验收详设/56-UI逐屏线框与交互验收详设.md}
+    output: 拖拽/预览/发布
+    acceptance: 可保存草稿
+    codeDirectory: web-admin/src/views/lowcode/LcPageDesigner.vue
+    openApiOperationIds: [createLowcodePageDraft, updateLowcodePage, previewLowcodePage, publishLowcodePage, rollbackLowcodePage]
+    testCaseIds: [TC-E2E-LOWCODE-PAGE-001]
+    evidence: release-evidence/v1.0.0/ga2-47-evidence.md
+    trackingRecordRow: 23 号 line 49 (47 低代码设计器交互)
+    status: Done
+    notes: 拖拽组件树 + 属性面板 + 预览模式 + 草稿/发布/回滚 + configHash 乐观锁
+  - wbsId: P4-05
+    version: v0.4
+    title: 代码生成 diff
+    role: 后端
+    inputDocs:
+      - {docId: '14', path: docs/14-低代码平台设计/14-低代码平台设计.md}
+      - {docId: '36', path: docs/36-低代码高级能力设计/36-低代码高级能力设计.md}
+    output: diff_json 5 数组（added/modified/deleted/conflict/unchanged）
+    acceptance: 不覆盖人工修改
+    codeDirectory: backend/yutong-lowcode-service/src/main/java/com/yutong/lowcode/generator/
+    openApiOperationIds: [createLowcodeGeneratorTask]
+    testCaseIds: [TC-P4-GEN-001, TC-P4-GEN-002]
+    evidence: release-evidence/v1.0.0/ga2-48-evidence.md
+    trackingRecordRow: 23 号 line 16 (14 低代码) + line 42 (36 低代码高级)
+    status: Done
+    notes: 14 FreeMarker 模板（ddl/java×7/vue×4/uniapp×2/openapi×1）+ GeneratorDiffService 真实文件扫描 + @manual-edit 标记保护 + 5 冲突场景 + asyncTaskCreate 策略
+  - wbsId: P4-06
+    version: v0.4
+    title: AI Gateway 对话 API
+    role: 后端
+    inputDocs:
+      - {docId: '13', path: docs/13-AI能力设计/13-AI能力设计.md}
+      - {docId: '37', path: docs/37-AI治理与评测设计/37-AI治理与评测设计.md}
+    output: chat API + 流式 SSE
+    acceptance: 审计日志完整
+    codeDirectory: backend/yutong-ai-service/src/main/java/com/yutong/ai/chat/
+    openApiOperationIds: [chatWithAssistant, applyAiSuggestion]
+    testCaseIds: [TC-P4-AI-CHAT-001, TC-SEC-AI-001]
+    evidence: release-evidence/v1.0.0/security/
+    trackingRecordRow: 23 号 line 15 (13 AI 能力) + line 43 (37 AI 治理)
+    status: Done
+    notes: AiChatController + AiChatApplicationService + 流式 SSE + AiStreamEvent 8 type + aiChat policy + 审计 + 配额 + tool call 日志
+  - wbsId: P4-07
+    version: v0.4
+    title: RAG 知识库入库与检索
+    role: 后端
+    inputDocs:
+      - {docId: '13', path: docs/13-AI能力设计/13-AI能力设计.md}
+    output: docs 问答 + sources 引用
+    acceptance: 向量检索召回正确
+    codeDirectory: backend/yutong-ai-service/src/main/java/com/yutong/ai/rag/
+    openApiOperationIds: []
+    testCaseIds: [TC-P4-RAG-001]
+    evidence: release-evidence/v1.0.0/security/
+    trackingRecordRow: 23 号 line 15 (13 AI 能力)
+    status: Done
+    notes: AiDocument/AiDocumentChunk/AiEmbedding/AiKnowledgeBase domain + EmbeddingService + DocumentIngestApplicationService + RagRetrievalService + RagAclService + VectorRepository
+  - wbsId: P4-08
+    version: v0.4
+    title: AI 生成草稿与人工确认
+    role: 后端+前端
+    inputDocs:
+      - {docId: '13', path: docs/13-AI能力设计/13-AI能力设计.md}
+      - {docId: '47', path: docs/47-低代码设计器交互详设/47-低代码设计器交互详设.md}
+    output: 页面/字段草稿
+    acceptance: 人工确认后才入库
+    codeDirectory: backend/yutong-ai-service/src/main/java/com/yutong/ai/chat/dto/ApplySuggestionRequest.java
+    openApiOperationIds: [applyAiSuggestion]
+    testCaseIds: [TC-P4-AI-APPLY-001]
+    evidence: release-evidence/v1.0.0/security/
+    trackingRecordRow: 23 号 line 15 (13 AI 能力) + line 49 (47 低代码设计器交互)
+    status: Done
+    notes: AI 只产出建议和草稿不直接写生产数据 + aiApply policy + expectedVersion + draftHash + idempotencyKey + 人工确认后才应用
+  # ============================================================
+  # v0.5 WBS：工程化增强（P5-01 ~ P5-05）
+  # ============================================================
+  - wbsId: P5-01
+    version: v0.5
+    title: CI 基础流水线
+    role: DevOps
+    inputDocs:
+      - {docId: '20', path: docs/20-DevOps与CI-CD部署设计/20-DevOps与CI-CD部署设计.md}
+      - {docId: '29', path: docs/29-工程化规范与脚手架设计/29-工程化规范与脚手架设计.md}
+    output: build/test CI 流水线
+    acceptance: 流水线通过
+    codeDirectory: .github/workflows/ci.yml
+    openApiOperationIds: []
+    testCaseIds: [TC-P5-CI-001]
+    evidence: release-evidence/v1.0.0/16-ci-governance/
+    trackingRecordRow: 23 号 line 24 (20 DevOps) + line 33 (29 工程化规范)
+    status: Done
+    notes: ci.yml 9 阶段（validate→backend→frontend→database→contract→security-lite→build-image→evidence-snapshot→quality nightly）+ schedule nightly trigger
+  - wbsId: P5-02
+    version: v0.5
+    title: 契约检查
+    role: DevOps
+    inputDocs:
+      - {docId: '27', path: docs/27-OpenAPI与前端类型生成规范/27-OpenAPI与前端类型生成规范.md}
+      - {docId: '55', path: docs/55-OpenAPI接口Schema与Mock详设/55-OpenAPI接口Schema与Mock详设.md}
+    output: openapi diff 检查脚本
+    acceptance: 设计契约与运行时一致
+    codeDirectory: YuTong-Java-Docs/quality/check-openapi-diff.sh + YuTong-Java-Docs/quality/export-openapi.sh
+    openApiOperationIds: []
+    testCaseIds: [TC-P5-CONTRACT-001]
+    evidence: release-evidence/v1.0.0/16-ci-governance/
+    trackingRecordRow: 23 号 line 31 (27 OpenAPI 规范) + line 65 (55 OpenAPI Ready)
+    status: Done
+    notes: openapi diff 自动比对 + export-openapi 运行时契约导出 + CI 集成
+  - wbsId: P5-03
+    version: v0.5
+    title: 安全扫描
+    role: 安全
+    inputDocs:
+      - {docId: '21', path: docs/21-安全合规与等保隐私设计/21-安全合规与等保隐私设计.md}
+      - {docId: '34', path: docs/34-审计日志与防篡改存储设计/34-审计日志与防篡改存储设计.md}
+    output: 依赖/镜像扫描报告
+    acceptance: 报告归档
+    codeDirectory: .github/workflows/release.yml + tools/security/
+    openApiOperationIds: []
+    testCaseIds: [TC-SEC-SUPPLY-001, TC-SEC-SUPPLY-002, TC-SEC-SUPPLY-003]
+    evidence: release-evidence/v1.0.0/security/
+    trackingRecordRow: 23 号 line 25 (21 安全合规) + line 40 (34 审计日志)
+    status: Done
+    notes: gitleaks 密钥扫描 + Trivy 镜像漏洞扫描 + CycloneDX SBOM 生成 + SLSA L1 provenance + 92 漏洞基线一致
+  - wbsId: P5-04
+    version: v0.5
+    title: 监控指标
+    role: 后端/运维
+    inputDocs:
+      - {docId: '12', path: docs/12-中间件集成设计/12-中间件集成设计.md}
+      - {docId: '33', path: docs/33-可观测性与运维监控设计/33-可观测性与运维监控设计.md}
+    output: Prometheus 指标 + Grafana 看板
+    acceptance: 指标可查询
+    codeDirectory: deploy/monitoring/prometheus.yml + deploy/monitoring/grafana/provisioning/
+    openApiOperationIds: []
+    testCaseIds: [TC-P5-MONITOR-001]
+    evidence: release-evidence/v1.0.0/01-functional/smoke-test-report.md
+    trackingRecordRow: 23 号 line 14 (12 中间件) + line 39 (33 可观测性)
+    status: Done
+    notes: prometheus.yml + alerts.yml 5 规则 + docker-compose.monitoring.yml + grafana provisioning 3 看板 JSON
+  - wbsId: P5-05
+    version: v0.5
+    title: 部署回滚演练
+    role: DevOps
+    inputDocs:
+      - {docId: '20', path: docs/20-DevOps与CI-CD部署设计/20-DevOps与CI-CD部署设计.md}
+      - {docId: '33', path: docs/33-可观测性与运维监控设计/33-可观测性与运维监控设计.md}
+    output: runbook + 演练记录
+    acceptance: 7 项演练全 PASS
+    codeDirectory: deploy/runbooks/
+    openApiOperationIds: []
+    testCaseIds: [TC-P5-DRILL-001, TC-P5-DRILL-002, TC-P5-DRILL-003, TC-P5-DRILL-004, TC-P5-DRILL-005, TC-P5-DRILL-006, TC-P5-DRILL-007]
+    evidence: release-evidence/v1.0.0/01-functional/smoke-test-report.md
+    trackingRecordRow: 23 号 line 24 (20 DevOps) + line 39 (33 可观测性)
+    status: Done
+    notes: 7 个 Runbook + 7 项发布回滚演练全 PASS + drills-record.md 证据归档
+  # ============================================================
+  # P6-02 WBS：免费 LLM 供应商集成与 Pollinations 匿名模式修复
+  # ============================================================
+  - wbsId: P6-02
+    version: P6-02
+    title: 免费 LLM 供应商集成与 Pollinations 匿名模式修复
+    role: AI 子系统
+    inputDocs:
+      - {docId: '13', path: docs/13-AI能力设计/13-AI能力设计.md}
+      - {docId: '37', path: docs/37-AI治理与评测设计/37-AI治理与评测设计.md}
+    output: 84 家免费/试用 LLM 供应商模板（R__seed_demo_data.sql 65 家 + R__seed_demo_data_providers_patch.sql 19 家；含 mock-local/ollama/qwenpaw 本地部署模板；Pollinations 默认禁用，Ollama 提升为默认本地免费真实供应商）；OpenAiCompatibleAdapter Pollinations 匿名模式修复（消息截断、max_tokens 限制、供应商链式降级）与 Java 原生 HttpClient 改造；AI 对话功能测试报告；Ollama 本地服务编排 deploy/docker-compose.ollama.yml
+    acceptance: 单元测试通过；Docker 容器启动；Pollinations 默认禁用，匿名模式仅作为可选备用；Ollama 本地服务默认启用（host.docker.internal:11434/v1）；健康检查覆盖；API 冒烟：登录（admin_demo/demo123）、/api/v1/ai/providers/models 模型列表、/api/v1/ai/chat AI 对话（mock-local + ollama/qwen2.5:0.5b 真实调用均 200）、/api/v1/ai/providers/health-check 供应商健康检查（Ollama reachable=true/defaultModelOk=true）
+    codeDirectory: backend/yutong-ai-service/src/main/java/com/yutong/ai/chat/
+    openApiOperationIds: [chatWithAssistant, listAiConversations, applyAiSuggestion]
+    testCaseIds: [TC-P4-AI-CHAT-001, TC-SEC-AI-001]
+    evidence: release-evidence/v1.0.0/security/
+    trackingRecordRow: 23 号 line 79 (AI Gateway)
+    status: Done
+    notes: P6-02 为 v0.4 AI Gateway 基线之后的扩展任务；OpenAiCompatibleAdapter 已改用 Java 原生 HttpClient，Pollinations 匿名模式已做消息截断（200 字符）、max_tokens=1、仅保留最后一条 user 消息、不发送 Authorization 头；AiChatApplicationService 已实现供应商链式降级（失败时尝试下一个启用的非 mock 供应商，最终降级 mock）；数据库种子数据已扩展至 84 家（R__seed_demo_data.sql 65 家 + R__seed_demo_data_providers_patch.sql 19 家），其中 Pollinations 因匿名端点极不稳定默认 enabled=false，Ollama 本地服务提升为默认真实免费供应商（enabled=true，endpoint=host.docker.internal:11434/v1）；Ollama 本地服务编排 deploy/docker-compose.ollama.yml 已创建并运行，qwen2.5:0.5b 模型已拉取；后端 /api/v1/ai/chat 真实调用 Ollama 成功（200），健康检查 Ollama reachable=true/defaultModelOk=true；全量 API 冒烟已回归通过。
+  # ============================================================
+  # v1.0 GA：无独立 WBS 任务，GA 收敛由 79/100 号文档驱动并通过 C2/C3 证据门禁
+  # 61 号文档原始 WBS 仅覆盖 v0.2~v0.5 共 30 项任务，GA 不新增 WBS
+  # ============================================================
+governance:
+  taskMustHave:
+    - wbsId 唯一编号（P2-NN/P3-NN/P4-NN/P5-NN/GA-NN）
+    - version 对齐 product-baseline.yaml releaseTaxonomy
+    - 角色明确（后端/前端/移动端/DevOps/测试/安全/全角色）
+    - 输入文档 docId 与路径
+    - 输出物明确
+    - 验收标准可机器化或人工可判定
+    - 代码目录路径
+    - OpenAPI operationId 列表（无则空数组）
+    - 测试用例编号列表
+    - 验收证据路径
+    - 23 号追踪记录行号
+    - 状态枚举 Done/Ready/InProgress/Not Started
+  forbiddenTaskDescriptions:
+    - '调研一下'
+    - '看情况实现'
+    - '待定'
+    - 'TBD'
+    - 'TODO 待补'
+    - '稍后决定'
+  versionBoundaryPolicy: 分期边界与 39/49 一致，不得跨版本提前实现 NOT-V02-* 任务（除非通过 39 变更流程）
+  updatePolicy: 每完成一个 WBS 必须回写 23 号追踪记录 + 更新本 YAML 的 status 字段
+  importToProjectManagementTool: 本 YAML 可直接导入项目管理工具，每个 wbsTasks 项对应一个工作包
+summary:
+  totalTasks: 31
+  v02Tasks: 9
+  v03Tasks: 8
+  v04Tasks: 8
+  v05Tasks: 5
+  p6Tasks: 1
+  gaTasks: 0
+  doneTasks: 30
+  readyTasks: 0
+  inProgressTasks: 1
+  notStartedTasks: 0
+  notInV02V03Items: 5
+  extendedFromExcluded: 4
+  deferredFromExcluded: 1
+  alignedWith39: true
+  alignedWith49: true
+  lastUpdatedAt: '2026-07-31T00:00:00Z'
+notes:
+  - 本 YAML 是 61 号文档 WBS 机器可读基线，对齐 product-baseline.yaml releaseTaxonomy E1~GA。
+  - v0.2~v0.5 共 30/30 任务已 Done；新增 P6-02 任务状态为 Verifying。
+  - 5 项 NOT-V02-V03 任务全部与 39/49 分期边界一致，防止范围蔓延。
+  - 2026-07-31 状态同步：NOT-V02-01~04（BPMN/报表大屏/插件/多数据源）实际已实现为 extended，注明 actualImplementation；NOT-V02-05（完整 RBAC 后台）保持 deferred（真正未实现）。
+  - 每个 WBS 5 要素齐全：docId/路径 + 代码目录 + operationId + testCaseId + 证据路径 + 23 追踪记录行号。

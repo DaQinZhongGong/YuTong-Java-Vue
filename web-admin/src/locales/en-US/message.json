@@ -1,0 +1,14 @@
+{
+    "message.realtime.label":  "Realtime:",
+    "message.field.title":  "Title",
+    "message.field.type":  "Type",
+    "message.field.content":  "Content",
+    "message.field.operation":  "Action",
+    "message.status.unread":  "Unread",
+    "message.status.read":  "Read",
+    "message.msg.markRead":  "Marked as read",
+    "message.msg.newMessage":  "New message",
+    "message.type.todo":  "Todo",
+    "message.type.notification":  "Notification",
+    "message.msg.realtimeConnectionError":  "Realtime push connection error, falling back to REST polling"
+}

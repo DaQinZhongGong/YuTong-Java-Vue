@@ -1,0 +1,88 @@
+# YuTong 本地依赖 — boot 模式单体
+# 启动: docker compose -f deploy/docker-compose.boot.yml up -d
+# 详见: YuTong-Java-Docs/20-DevOps与部署设计、25-本地开发与工程初始化手册
+#
+# GA2-30: 所有服务名、容器名、网络名、卷名必须带 yutong- 前缀，避免与其他项目冲突。
+name: yutong
+
+services:
+  yutong-postgres:
+    image: pgvector/pgvector:pg18
+    container_name: yutong-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-yutong}
+      POSTGRES_USER: ${POSTGRES_USER:-yutong}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-yutong-dev-password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "${POSTGRES_HOST_PORT:-20000}:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-yutong} -d ${POSTGRES_DB:-yutong}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  yutong-redis:
+    image: redis:7-alpine
+    container_name: yutong-redis
+    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
+    ports:
+      - "${REDIS_HOST_PORT:-20001}:6379"
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  yutong-minio:
+    image: minio/minio:latest
+    container_name: yutong-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-yutong-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-yutong-minio-dev-secret}
+    ports:
+      - "${MINIO_HOST_PORT:-20002}:9000"
+      - "${MINIO_CONSOLE_PORT:-20003}:9001"
+    volumes:
+      - ./data/minio:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # 本地开发后端构建/运行容器（可选，本地已装 JDK 25 + Maven 可不用）
+  # 使用方式: docker compose -f deploy/docker-compose.boot.yml run --rm yutong-backend-mvn mvn -pl yutong-boot -am spring-boot:run
+  # GA2-30: 主机名统一使用 yutong- 前缀容器名，避免独立容器运行时寻址不一致
+  yutong-backend-mvn:
+    image: maven:3.9-eclipse-temurin-25
+    container_name: yutong-backend-mvn
+    profiles: ["tools"]
+    working_dir: /workspace
+    volumes:
+      - ../:/workspace
+      - yutong-maven-repo:/root/.m2/repository
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      POSTGRES_HOST: yutong-postgres
+      POSTGRES_PORT: "5432"
+      REDIS_HOST: yutong-redis
+      REDIS_PORT: "6379"
+      MINIO_ENDPOINT: http://yutong-minio:9000
+    depends_on:
+      yutong-postgres:
+        condition: service_healthy
+      yutong-redis:
+        condition: service_healthy
+      yutong-minio:
+        condition: service_healthy
+    command: ["mvn", "-v"]
+
+volumes:
+  yutong-maven-repo:

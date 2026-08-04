@@ -1,0 +1,19 @@
+packages:
+  - web-admin
+  - mobile-uniapp
+  - docs-site
+allowBuilds:
+  '@parcel/watcher': true
+  core-js: true
+  core-js-pure: true
+  esbuild: true
+  vue-demi: true
+overrides:
+  '@intlify/shared': 9.14.5
+  '@intlify/message-compiler': 9.14.5
+  vue-i18n: 9.14.5
+
+# uni-h5-vue 502 alpha 在非 optimized 插槽更新时对只读 slots._ 执行 Object.assign 导致 TypeError
+# (页面切换/具名插槽场景), 见 patches/@dcloudio__uni-h5-vue.patch
+patchedDependencies:
+  '@dcloudio/uni-h5-vue@3.0.0-alpha-5020120260710001': patches/@dcloudio__uni-h5-vue.patch

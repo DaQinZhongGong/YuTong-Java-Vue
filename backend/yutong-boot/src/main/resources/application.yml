@@ -1,0 +1,143 @@
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  application:
+    name: yutong-boot
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+  flyway:
+    enabled: true
+    locations: filesystem:database/migrations,filesystem:database/seed
+    baseline-on-migrate: true
+    validate-on-migrate: false
+    # GA2-40: V016 通知模板种子数据含 ${var} 字面量 (业务侧模板变量占位符), 关闭 Flyway 占位符替换避免冲突
+    placeholder-replacement: false
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+# MyBatis-Plus
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: INPUT
+      logic-delete-field: deleted
+      logic-delete-value: true
+      logic-not-delete-value: false
+
+# Sa-Token
+sa-token:
+  token-name: Authorization
+  timeout: ${AUTH_ACCESS_TOKEN_TTL_SECONDS:900}
+  active-timeout: -1
+  is-concurrent: true
+  is-share: false
+  token-style: uuid
+  is-log: false
+
+# Springdoc OpenAPI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  default-flat-param-object: true
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,openapi,prometheus,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+    prometheus:
+      enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
+    tags:
+      application: ${spring.application.name}
+
+# YuTong 平台配置
+yutong:
+  auth:
+    # 认证模式: MOCK/OIDC/LDAP_AD/CAS/CUSTOMER_IAM/LOCAL_IAM_EXTENSION
+    # 设计来源: 32-企业级权限与租户接入方案
+    # staging/prod 环境禁止使用 MOCK
+    mode: ${YUTONG_AUTH_MODE:MOCK}
+    mock:
+      enabled-profiles: local,test
+    # OIDC 配置（mode=OIDC 时生效）
+    oidc:
+      issuer: ${YUTONG_AUTH_OIDC_ISSUER:}
+      client-id: ${YUTONG_AUTH_OIDC_CLIENT_ID:}
+      client-secret: ${YUTONG_AUTH_OIDC_CLIENT_SECRET:}
+      redirect-uri: ${YUTONG_AUTH_OIDC_REDIRECT_URI:}
+      scope: ${YUTONG_AUTH_OIDC_SCOPE:openid profile email}
+      clock-skew: ${YUTONG_AUTH_OIDC_CLOCK_SKEW:60}
+    # 应急管理员配置
+    emergency:
+      enabled: ${YUTONG_AUTH_EMERGENCY_ENABLED:false}
+      max-usage-count: ${YUTONG_AUTH_EMERGENCY_MAX_USAGE_COUNT:5}
+    # 21-安全合规: refresh token 轮换配置
+    # access token 有效期由 sa-token.timeout 控制 (AUTH_ACCESS_TOKEN_TTL_SECONDS, 默认 900=15min)
+    # refresh token 有效期 (AUTH_REFRESH_TOKEN_TTL_SECONDS, 默认 1209600=14d)
+    # refresh-token.rotation-enabled: refresh token 每次使用必须轮换 (21 号文档要求)
+    refresh-token:
+      ttl-seconds: ${AUTH_REFRESH_TOKEN_TTL_SECONDS:1209600}
+      rotation-enabled: ${AUTH_REFRESH_ROTATION_ENABLED:true}
+  # GA2-32: 实时推送配置。设计来源: 44-实时通信与消息推送设计
+  # enabled=true 时启用 /ws/v1 WebSocket 端点 + Redis PubSub 跨实例广播
+  # enabled=false 时端侧自动回退到 REST 拉取（GA 基线无损失）
+  realtime:
+    push:
+      enabled: ${YUTONG_REALTIME_PUSH_ENABLED:true}
+      endpoint: /ws/v1
+      queue-size: 1000
+      heartbeat-seconds: 30
+      heartbeat-fail-threshold: 3
+      redis-channel: yutong:realtime:push
+      allow-tenant-subscribe: true
+  # GA2-L170: 商业授权模块开关。设计来源: 70-商业授权与版本能力裁剪详设「模块开关」
+  # 规则: 模块开关只影响菜单、路由、接口访问和初始化数据，不允许在业务核心代码中散落 if/else。
+  # 未配置的模块默认 true（Community 基础能力默认可用）。
+  # hasModule(code) = License.modules 包含 code && yutong.modules.{code}=true
+  # 降级 Community 模式（无 License 记录）下 modules 仅含 system/sample/lowcode，
+  # 即使开关为 true，ai/report/workflow/datasource/plugin 也会因不在 modules 列表而返回 false。
+  modules:
+    lowcode: ${YUTONG_MODULE_LOWCODE:true}
+    ai: ${YUTONG_MODULE_AI:true}
+    report: ${YUTONG_MODULE_REPORT:true}
+    workflow: ${YUTONG_MODULE_WORKFLOW:true}
+    datasource: ${YUTONG_MODULE_DATASOURCE:true}
+    plugin: ${YUTONG_MODULE_PLUGIN:true}
+
+# GA2-32: Redis 配置（PushService 跨实例广播用，单机模式可选）
+spring.data.redis:
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+  password: ${REDIS_PASSWORD:}
+  timeout: 3000ms
+  lettuce.pool.max-active: 8
+  lettuce.pool.max-idle: 4
+  lettuce.pool.min-idle: 0

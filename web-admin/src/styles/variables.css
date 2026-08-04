@@ -1,0 +1,219 @@
+/**
+ * YuTong 设计系统 Token - 浅色主题 (default-light)
+ * 设计来源: 50-设计系统与视觉规范详设 (Token 到 CSS Variables 完整映射 line 311-336)
+ *
+ * 命名规范: --yt-{category}-{name}
+ * 桥接策略: --yt-* 为权威源, --el-* 从 --yt-* 派生, --yutong-* 为历史别名 (向后兼容)
+ */
+
+:root {
+  /* ===== 色彩 Token (50号文档 line 23-35) ===== */
+  --yt-color-primary: #2563eb;
+  --yt-color-success: #16a34a;
+  --yt-color-warning: #d97706;
+  --yt-color-danger: #dc2626;
+  --yt-color-info: #64748b;
+
+  /* 主色浅色阶 (Element Plus light-N 算法生成, 归档于 token 文件 per 50号文档 line 339) */
+  --yt-color-primary-light-3: #6b95f3;
+  --yt-color-primary-light-5: #93b1f7;
+  --yt-color-primary-light-7: #bacdfb;
+  --yt-color-primary-light-9: #e2ecfe;
+  --yt-color-primary-dark-2: #1d50bd;
+
+  /* 背景色 */
+  --yt-bg-page: #f6f8fb;
+  --yt-bg-card: #ffffff;
+
+  /* 边框 */
+  --yt-border-default: #e5e7eb;
+  --yt-border-light: #f1f5f9;
+
+  /* 文字 */
+  --yt-text-primary: #111827;
+  --yt-text-secondary: #4b5563;
+  --yt-text-regular: #374151;
+  --yt-text-disabled: #9ca3af;
+  --yt-text-placeholder: #c0c4cc;
+
+  /* ===== 字体 Token (50号文档 line 37-48) ===== */
+  --yt-font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --yt-font-size-title: 20px;      /* 页面标题 */
+  --yt-font-size-section: 16px;    /* 区块标题 */
+  --yt-font-size-body: 14px;       /* 正文 */
+  --yt-font-size-table: 13px;      /* 表格正文 */
+  --yt-font-size-caption: 12px;    /* 辅助说明 */
+  --yt-font-line-height-title: 28px;
+  --yt-font-line-height-section: 24px;
+  --yt-font-line-height-body: 22px;
+  --yt-font-line-height-table: 20px;
+  --yt-font-line-height-caption: 18px;
+  --yt-font-weight-bold: 600;
+  --yt-font-weight-normal: 400;
+
+  /* ===== 间距 Token (50号文档 line 50-60, 4px 网格) ===== */
+  --yt-space-xs: 4px;   /* 图标与文字间距 */
+  --yt-space-sm: 8px;   /* 表单项内间距 */
+  --yt-space-md: 16px;  /* 卡片内边距 */
+  --yt-space-lg: 24px;  /* 区块间距 */
+  --yt-space-xl: 32px;  /* 页面主区间距 */
+
+  /* ===== 圆角 Token (50号文档 line 62-68) ===== */
+  --yt-radius-sm: 4px;   /* 标签、输入框 */
+  --yt-radius-md: 8px;   /* 卡片、弹窗 */
+  --yt-radius-lg: 12px;  /* 工作台卡片、设计器面板 */
+
+  /* ===== 阴影 Token (50号文档 line 69-70) ===== */
+  --yt-shadow-card: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --yt-shadow-popover: 0 12px 32px rgba(15, 23, 42, 0.16);
+
+  /* ===== 布局尺寸 Token (50号文档 line 72-82) ===== */
+  --yt-sidebar-width: 232px;
+  --yt-sidebar-collapsed-width: 64px;
+  --yt-header-height: 56px;
+  --yt-content-padding: 24px;
+  --yt-table-row-height: 44px;
+  --yt-table-row-height-compact: 36px;
+
+  /* ===== 动效时长 Token (50号文档 line 275-291) ===== */
+  --yt-transition-hover: 120ms;     /* 按钮 hover 100~150ms */
+  --yt-transition-click: 100ms;    /* 按钮点击 80~120ms */
+  --yt-transition-drawer: 220ms;   /* 抽屉打开 180~240ms */
+  --yt-transition-dialog: 190ms;   /* 弹窗打开 160~220ms */
+  --yt-transition-highlight: 1200ms; /* 新增明细行高亮 1000~1500ms */
+
+  /* ===== Element Plus 主题桥接 (50号文档 line 337-339, 从 --yt-* 派生) ===== */
+  --el-color-primary: var(--yt-color-primary);
+  --el-color-success: var(--yt-color-success);
+  --el-color-warning: var(--yt-color-warning);
+  --el-color-danger: var(--yt-color-danger);
+  --el-color-info: var(--yt-color-info);
+  /* RGB 变量 (Element Plus 内部用于 rgba() 计算, 必须同步覆盖) */
+  --el-color-primary-rgb: 37, 99, 235;
+  --el-color-success-rgb: 22, 163, 74;
+  --el-color-warning-rgb: 217, 119, 6;
+  --el-color-danger-rgb: 220, 38, 38;
+  --el-color-info-rgb: 100, 116, 139;
+  --el-color-primary-light-3: var(--yt-color-primary-light-3);
+  --el-color-primary-light-5: var(--yt-color-primary-light-5);
+  --el-color-primary-light-7: var(--yt-color-primary-light-7);
+  --el-color-primary-light-9: var(--yt-color-primary-light-9);
+  --el-color-primary-dark-2: var(--yt-color-primary-dark-2);
+  --el-bg-color: var(--yt-bg-card);
+  --el-bg-color-page: var(--yt-bg-page);
+  --el-border-color: var(--yt-border-default);
+  --el-border-color-light: var(--yt-border-light);
+  --el-text-color-primary: var(--yt-text-primary);
+  --el-text-color-regular: var(--yt-text-regular);
+  --el-text-color-secondary: var(--yt-text-secondary);
+  --el-text-color-disabled: var(--yt-text-disabled);
+  --el-text-color-placeholder: var(--yt-text-placeholder);
+  --el-border-radius-small: var(--yt-radius-sm);
+  --el-border-radius-base: var(--yt-radius-md);
+  --el-border-radius-round: var(--yt-radius-lg);
+  --el-box-shadow-light: var(--yt-shadow-card);
+  --el-box-shadow: var(--yt-shadow-popover);
+  --el-font-size-base: var(--yt-font-size-body);
+
+  /* ===== 历史别名 (向后兼容, 指向 --yt-* 权威源) ===== */
+  --yutong-primary: var(--yt-color-primary);
+  --yutong-success: var(--yt-color-success);
+  --yutong-warning: var(--yt-color-warning);
+  --yutong-danger: var(--yt-color-danger);
+  --yutong-info: var(--yt-color-info);
+  --yutong-primary-light-3: var(--yt-color-primary-light-3);
+  --yutong-primary-light-5: var(--yt-color-primary-light-5);
+  --yutong-primary-light-7: var(--yt-color-primary-light-7);
+  --yutong-primary-light-9: var(--yt-color-primary-light-9);
+  --yutong-primary-dark-2: var(--yt-color-primary-dark-2);
+  --yutong-bg-color: var(--yt-bg-card);
+  --yutong-bg-page: var(--yt-bg-page);
+  --yutong-text-primary: var(--yt-text-primary);
+  --yutong-text-regular: var(--yt-text-regular);
+  --yutong-text-secondary: var(--yt-text-secondary);
+  --yutong-text-placeholder: var(--yt-text-placeholder);
+  --yutong-border-color: var(--yt-border-default);
+  --yutong-border-light: var(--yt-border-light);
+  --yutong-sidebar-width: var(--yt-sidebar-width);
+  --yutong-sidebar-collapsed-width: var(--yt-sidebar-collapsed-width);
+  --yutong-header-height: var(--yt-header-height);
+  --yutong-content-padding: var(--yt-content-padding);
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--yt-font-family);
+  font-size: var(--yt-font-size-body);
+  line-height: var(--yt-font-line-height-body);
+  color: var(--yt-text-primary);
+  background-color: var(--yt-bg-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: var(--yt-color-primary);
+  text-decoration: none;
+}
+
+/* ===== WCAG 2.2 AA 无障碍全局样式 (设计来源: 43-国际化与无障碍设计、50-设计系统与视觉规范详设) ===== */
+
+/* 屏幕阅读器专用文本 (WCAG 1.3.1) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 跳过导航链接 (WCAG 2.4.1 Bypass Blocks) */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: var(--yt-color-primary);
+  color: #fff;
+  font-size: 14px;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* 全局焦点可见样式 (WCAG 2.4.7 Focus Visible + 2.4.11 Focus Not Obscured)
+   设计文档 50: 焦点态使用 color-primary 外描边，不得被 outline: none 移除 */
+:focus-visible {
+  outline: 2px solid var(--yt-color-primary);
+  outline-offset: 2px;
+}
+
+/* 减少动画 (WCAG 2.3.3 Animation from Interactions) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

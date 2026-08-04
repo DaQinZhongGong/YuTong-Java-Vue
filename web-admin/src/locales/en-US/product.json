@@ -1,0 +1,19 @@
+{
+    "product.field.name":  "Product name",
+    "product.field.code":  "Product code",
+    "product.field.unit":  "Unit",
+    "product.field.price":  "Unit price",
+    "product.field.status":  "Status",
+    "product.field.operation":  "Action",
+    "product.field.remark":  "Remark",
+    "product.status.enabled":  "Enabled",
+    "product.status.disabled":  "Disabled",
+    "product.placeholder.searchName":  "Search product name",
+    "product.action.add":  "Add product",
+    "product.action.edit":  "Edit product",
+    "product.msg.confirmDelete":  "Are you sure you want to delete product [{name}]?",
+    "product.msg.tip":  "Tip",
+    "product.msg.deleteSuccess":  "Delete successful",
+    "product.msg.updateSuccess":  "Update successful",
+    "product.msg.createSuccess":  "Create successful"
+}

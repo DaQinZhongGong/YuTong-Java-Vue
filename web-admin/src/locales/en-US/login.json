@@ -1,0 +1,22 @@
+{
+    "login.title.app":  "YuTong Admin",
+    "login.subtitle.welcome":  "Welcome, please enter your account",
+    "login.field.username":  "Username",
+    "login.field.password":  "Password",
+    "login.field.mockUserType":  "Mock User Type",
+    "login.placeholder.username":  "Please enter your username",
+    "login.placeholder.password":  "Please enter your password",
+    "login.placeholder.mockUserType":  "Select Mock User Type",
+    "login.aria.username":  "Username",
+    "login.aria.password":  "Password",
+    "login.aria.mockUserType":  "Mock User Type (dev mode only)",
+    "login.action.submit":  "Log In",
+    "login.tip.devMode":  "Dev mode: switch between 4 Mock user types via the selector above to verify the permission matrix. This tip is hidden in production builds, and the backend rejects enabling Mock outside the dev profile.",
+    "login.msg.success":  "Login successful",
+    "login.rule.usernameRequired":  "Please enter your username",
+    "login.rule.passwordRequired": "Please enter your password",
+    "login.desc.admin": "Full permissions + ALL data scope",
+    "login.desc.biz": "Business permissions + SELF data scope",
+    "login.desc.approver": "Approval permissions + CUSTOM data scope",
+    "login.desc.viewer": "Read-only permissions + TENANT data scope + Masking"
+}

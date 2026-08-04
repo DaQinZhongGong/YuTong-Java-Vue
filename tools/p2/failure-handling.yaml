@@ -1,0 +1,93 @@
+# P2 命令失败处理映射机器可读定义
+# 来源：YuTong-Java-Docs/86-P2命令模板与执行记录详设/86-P2命令模板与执行记录详设.md
+# 用途：被 tools/p2/run-p2-checks.sh 失败汇总和 execution-record-template.md 引用。
+
+schemaVersion: '1.0.0'
+artifactId: yutong-p2-failure-handling
+basedOn: docs/86-P2命令模板与执行记录详设/86-P2命令模板与执行记录详设.md
+
+# 86 号文档原文"常见失败处理"5 条映射
+failureMappings:
+  - failurePattern: 目录缺失
+    affectedCommands:
+      - CMD-01
+    rootCause: 工程目录未按 07 号设计落盘
+    handlingPath: 回到 `07-项目源代码目录层级详细设计` 修目录
+    severity: P0
+    blocksP2: true
+  - failurePattern: 依赖未装
+    affectedCommands:
+      - CMD-06
+      - CMD-07
+      - CMD-08
+    rootCause: pnpm install 未执行或 lockfile 不一致
+    handlingPath: 回到 `25-本地开发与工程初始化手册` 补初始化
+    severity: P1
+    blocksP2: false
+  - failurePattern: 迁移失败
+    affectedCommands:
+      - CMD-04
+    rootCause: Flyway 脚本错误或数据库连接异常
+    handlingPath: 回到 `26-数据库迁移与种子数据详细设计` / `77-数据库ERD与关系校验详设`
+    severity: P0
+    blocksP2: true
+  - failurePattern: OpenAPI 缺失
+    affectedCommands:
+      - CMD-05
+      - CMD-02b
+    rootCause: 后端未启动或 springdoc-openapi 配置错误
+    handlingPath: 回到 `27-OpenAPI与前端类型生成规范` / `55-OpenAPI接口Schema与Mock详设` / `78-接口联调手册与契约验收详设`
+    severity: P0
+    blocksP2: true
+  - failurePattern: Secret 扫描失败
+    affectedCommands:
+      - CMD-09
+    rootCause: 仓库中存在硬编码密钥
+    handlingPath: 回到 `82-环境变量与密钥管理规范详设` / `73-供应链安全与SBOM详设`
+    severity: P0
+    blocksP2: true
+
+# 补充：脚本运行中常见错误（非 86 号原文，由实际工程经验补充）
+supplementalMappings:
+  - failurePattern: Ruby 环境不可用
+    affectedCommands:
+      - CMD-02b
+      - CMD-02c
+      - CMD-02d
+    rootCause: 本地未安装 Ruby 或版本不匹配
+    handlingPath: 使用 Docker 容器 `docker run --rm -v "$PWD:/workspace" -w /workspace ruby:3.2-slim bash -lc "ln -sf YuTong-Java-Docs docs && ruby YuTong-Java-Docs/quality/check_docs.rb"`
+    severity: P2
+    blocksP2: false
+  - failurePattern: 后端未启动
+    affectedCommands:
+      - CMD-03
+      - CMD-05
+    rootCause: yutong-backend 容器或进程未启动
+    handlingPath: 先启动后端：`docker run -d --name yutong-backend-run -p 8082:8080 yutong-backend:ga2-19` 或 `./mvnw -pl backend/yutong-boot spring-boot:run`
+    severity: P1
+    blocksP2: false
+  - failurePattern: 端口冲突
+    affectedCommands:
+      - CMD-03
+      - CMD-05
+      - CMD-06
+      - CMD-07
+    rootCause: 8080/8082/5183/5184 端口被占用
+    handlingPath: `netstat -ano | findstr :8080`（Windows）或 `lsof -i :8080`（Linux/Mac），释放端口或改用其他端口
+    severity: P2
+    blocksP2: false
+  - failurePattern: gitleaks 未安装
+    affectedCommands:
+      - CMD-09
+    rootCause: 本地未安装 gitleaks
+    handlingPath: 使用 `tools/checks/check-secrets.sh` 作为替代，或安装 gitleaks：`docker run --rm -v "$PWD:/workspace" zricethezav/gitleaks:latest detect --source /workspace --no-banner`
+    severity: P2
+    blocksP2: false
+
+# 失败处置规则
+dispositionRules:
+  - 任何 P0 失败必须当天升级到架构负责人（按 85 号 risk-escalation.yaml）
+  - P1 失败需在 23 追踪记录登记偏差，并指定责任人和截止日期
+  - P2 失败可记录跟进，不阻塞 P2 退出
+  - 所有失败必须在 execution-record-template.md 的"失败处理"章节留痕
+  - 失败关闭必须有证据路径（代码提交 / 配置变更 / 日志归档）
