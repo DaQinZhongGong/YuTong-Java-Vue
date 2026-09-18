@@ -2,6 +2,7 @@ package com.yutong.ai.rag.controller;
 
 import com.yutong.ai.rag.domain.AiDocument;
 import com.yutong.ai.rag.dto.IngestDocumentRequest;
+import com.yutong.ai.rag.dto.IngestFileRequest;
 import com.yutong.ai.rag.service.DocumentIngestApplicationService;
 import com.yutong.common.response.PageRequest;
 import com.yutong.common.response.PageResult;
@@ -11,6 +12,7 @@ import com.yutong.common.trace.TraceContext;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -59,6 +61,23 @@ public class AiDocumentController {
                 request.sourceType(),
                 request.sourceUri(),
                 request.content(),
+                request.visibility(),
+                request.sensitivityLevel(),
+                request.permissionCode());
+        return Result.ok(document, TraceContext.getTraceId());
+    }
+
+    @Operation(summary = "基于文件入库文档（P0-1 RAG loader parity）", operationId = "ingestAiDocumentFromFile",
+            description = "通过 fileId 从 MinIO 拉取原文件，按 loaderType/后缀自动路由到 pdf/docx/xlsx/csv/md/txt 装载器抽取文本后分片与向量化")
+    @RequiresPermission("ai:document:add")
+    @PostMapping("/ingest-file")
+    public Result<AiDocument> ingestFromFile(@Valid @RequestBody IngestFileRequest request) {
+        AiDocument document = service.ingestFromFile(
+                request.kbId(),
+                request.docTitle(),
+                request.fileId(),
+                request.loaderType(),
+                request.sourceType(),
                 request.visibility(),
                 request.sensitivityLevel(),
                 request.permissionCode());

@@ -49,6 +49,11 @@
         <postgresql.version>42.7.7</postgresql.version>
         <ulid.version>5.2.3</ulid.version>
         <freemarker.version>2.3.34</freemarker.version>
+        <!-- RAG 文档解析 (P0-1): pdfbox / poi / commons-csv / tika -->
+        <pdfbox.version>3.0.3</pdfbox.version>
+        <poi.version>5.4.0</poi.version>
+        <commons-csv.version>1.12.0</commons-csv.version>
+        <tika.version>2.9.3</tika.version>
         <!-- 测试: Testcontainers (GA2-L180 契约测试基础设施) -->
         <testcontainers.version>1.20.4</testcontainers.version>
     </properties>
@@ -203,6 +208,28 @@
                 <groupId>org.freemarker</groupId>
                 <artifactId>freemarker</artifactId>
                 <version>${freemarker.version}</version>
+            </dependency>
+
+            <!-- RAG loader parity: pdfbox / poi / commons-csv / tika-core -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-csv</artifactId>
+                <version>${commons-csv.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-core</artifactId>
+                <version>${tika.version}</version>
             </dependency>
 
             <!-- Testcontainers BOM (GA2-L180 契约测试基础设施) -->

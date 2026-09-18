@@ -141,6 +141,10 @@ async function handleLogin() {
             {{ $t('login.action.submit') }}
           </el-button>
         </el-form-item>
+        <div class="login-footer-links">
+          <router-link to="/register" class="footer-link">注册账号</router-link>
+          <router-link to="/forgot-password" class="footer-link">忘记密码？</router-link>
+        </div>
       </el-form>
       <div v-if="isDev" class="mock-tip">
         {{ $t('login.tip.devMode') }}
@@ -180,6 +184,20 @@ async function handleLogin() {
 }
 .login-btn {
   width: 100%;
+}
+.login-footer-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -8px;
+  margin-bottom: 8px;
+}
+.footer-link {
+  font-size: 13px;
+  color: var(--yt-color-primary, #2563eb);
+  text-decoration: none;
+}
+.footer-link:hover {
+  text-decoration: underline;
 }
 .mock-tip {
   margin-top: 8px;

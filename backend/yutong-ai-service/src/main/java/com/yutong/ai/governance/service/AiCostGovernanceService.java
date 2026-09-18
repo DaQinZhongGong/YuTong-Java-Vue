@@ -9,6 +9,7 @@ import com.yutong.ai.gateway.mapper.AiProviderMapper;
 import com.yutong.ai.gateway.service.AiAuditService;
 import com.yutong.ai.governance.domain.AiCostQuota;
 import com.yutong.ai.governance.domain.AiCostQuotaUsage;
+import com.yutong.ai.governance.dto.AiUsageDailyVO;
 import com.yutong.ai.governance.mapper.AiCostQuotaMapper;
 import com.yutong.ai.governance.mapper.AiCostQuotaUsageMapper;
 import com.yutong.common.auth.CurrentUserContext;
@@ -22,7 +23,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * AI 成本额度治理服务。设计来源: GA2-45 成本治理闭环
@@ -245,5 +249,103 @@ public class AiCostGovernanceService {
      * 当日成本统计。
      */
     public record TodayStats(long totalTokens, BigDecimal totalCost, long callCount) {
+    }
+
+    /**
+     * 用量日报查询 (日趋势)。设计来源: P2-C Token 用量可视化 (M-2)。
+     *
+     * <p>数据源为调用后实时累计的 {@code ai_cost_quota_usage} 日行, 无需定时任务。
+     *
+     * <p>失败关闭:
+     * <ul>
+     *   <li>scope 非 TENANT/USER/SCENARIO → 拒绝 (空默认 TENANT);</li>
+     *   <li>起日 تعط晚于止日 → 拒绝 (空默认近 30 天: 止日=today, 起日=止日-29);</li>
+     *   <li>跨度超过 93 天 → 拒绝;</li>
+     *   <li>USER 维度缺 key 且无当前用户 → 拒绝; TENANT 缺租户上下文 → 拒绝。</li>
+     * </ul>
+     *
+     * @param start     起日 (可空)
+     * @param end       止日 (可空)
+     * @param scope     维度 TENANT/USER/SCENARIO (可空默认 TENANT)
+     * @param scopeKey  维度键 (可空: USER→当前用户, TENANT→当前租户, SCENARIO→全部)
+     * @param modelCode 模型编码 (可空 = 全部模型)
+     */
+    public AiUsageDailyVO queryDailyUsage(LocalDate start, LocalDate end, String scope,
+                                           String scopeKey, String modelCode) {
+        String actualScope = (scope == null || scope.isBlank())
+                ? AiCostQuota.SCOPE_TENANT : scope.trim().toUpperCase(Locale.ROOT);
+        if (!AiCostQuota.SCOPE_TENANT.equals(actualScope)
+                && !AiCostQuota.SCOPE_USER.equals(actualScope)
+                && !AiCostQuota.SCOPE_SCENARIO.equals(actualScope)) {
+            throw new BusinessException(ErrorCode.SYS_PARAM_INVALID,
+                    "用量维度非法 (TENANT/USER/SCENARIO): " + scope);
+        }
+        LocalDate actualEnd = (end == null) ? LocalDate.now(ZONE) : end;
+        LocalDate actualStart = (start == null) ? actualEnd.minusDays(29) : start;
+        if (actualStart.isAfter(actualEnd)) {
+            throw new BusinessException(ErrorCode.SYS_PARAM_INVALID, "开始日期不能晚于结束日期");
+        }
+        if (ChronoUnit.DAYS.between(actualStart, actualEnd) > 92) {
+            throw new BusinessException(ErrorCode.SYS_PARAM_INVALID, "查询跨度不得超过 93 天");
+        }
+        String tenantId = CurrentUserContext.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new BusinessException(ErrorCode.SYS_PARAM_INVALID, "缺失租户上下文, 无法查询用量");
+        }
+        String actualKey = (scopeKey == null || scopeKey.isBlank())
+                ? defaultScopeKey(actualScope, tenantId) : scopeKey.trim();
+        if (actualKey == null && AiCostQuota.SCOPE_USER.equals(actualScope)) {
+            throw new BusinessException(ErrorCode.SYS_PARAM_INVALID, "用户维度需指定 scopeKey (或先登录)");
+        }
+
+        LambdaQueryWrapper<AiCostQuotaUsage> wrapper = new LambdaQueryWrapper<AiCostQuotaUsage>()
+                .eq(AiCostQuotaUsage::getTenantId, tenantId)
+                .eq(AiCostQuotaUsage::getQuotaScope, actualScope)
+                .between(AiCostQuotaUsage::getUsageDate, actualStart, actualEnd)
+                .orderByAsc(AiCostQuotaUsage::getUsageDate)
+                .orderByAsc(AiCostQuotaUsage::getModelCode);
+        if (actualKey != null) {
+            // SCENARIO 空 key = 不过滤 (全部场景); TENANT/USER 必有 key
+            wrapper.eq(AiCostQuotaUsage::getScopeKey, actualKey);
+        }
+        if (modelCode != null && !modelCode.isBlank()) {
+            wrapper.eq(AiCostQuotaUsage::getModelCode, modelCode.trim());
+        }
+        List<AiCostQuotaUsage> found = usageMapper.selectList(wrapper);
+
+        AiUsageDailyVO vo = new AiUsageDailyVO();
+        List<AiUsageDailyVO.Row> rows = new ArrayList<>(found.size());
+        long totalTokens = 0L;
+        BigDecimal totalCost = BigDecimal.ZERO;
+        for (AiCostQuotaUsage u : found) {
+            AiUsageDailyVO.Row row = new AiUsageDailyVO.Row();
+            row.setUsageDate(u.getUsageDate());
+            row.setQuotaScope(u.getQuotaScope());
+            row.setScopeKey(u.getScopeKey());
+            row.setModelCode(u.getModelCode());
+            row.setTokenUsed(u.getTokenUsed());
+            row.setCostUsed(u.getCostUsed());
+            rows.add(row);
+            totalTokens += (u.getTokenUsed() == null ? 0L : u.getTokenUsed());
+            totalCost = totalCost.add(u.getCostUsed() == null ? BigDecimal.ZERO : u.getCostUsed());
+        }
+        vo.setRows(rows);
+        vo.setTotalTokens(totalTokens);
+        vo.setTotalCost(totalCost);
+        vo.setStartDate(actualStart);
+        vo.setEndDate(actualEnd);
+        return vo;
+    }
+
+    private static String defaultScopeKey(String scope, String tenantId) {
+        if (AiCostQuota.SCOPE_USER.equals(scope)) {
+            String userId = CurrentUserContext.getUserId();
+            return (userId == null || userId.isBlank()) ? null : userId;
+        }
+        if (AiCostQuota.SCOPE_TENANT.equals(scope)) {
+            return tenantId;
+        }
+        // SCENARIO: 空 key = 全部场景 (调用方在 service 层不加 eq, 此处返回 null 标记不过滤)
+        return null;
     }
 }

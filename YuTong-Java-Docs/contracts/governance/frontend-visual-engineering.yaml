@@ -1,0 +1,377 @@
+taskId: GA2-L163
+taskName: 端侧体验与视觉工程补强
+documents:
+  - id: DOC-UX-004
+    name: 50-设计系统与视觉规范详设
+  - id: DOC-WEB-002
+    name: 53-Web管理端页面级分工详设
+  - id: DOC-MOB-002
+    name: 54-Uniapp移动端页面级分工详设
+  - id: DOC-UX-005
+    name: 56-UI逐屏线框与交互验收详设
+  - id: DOC-FE-001
+    name: 66-前端组件API与状态管理详设
+  - id: DOC-UX-006
+    name: 76-UI视觉走查与美感验收清单
+colorTokens:
+  - token: color-primary
+    value: "#2563EB"
+    cssVar: --yt-color-primary
+  - token: color-success
+    value: "#16a34a"
+  - token: color-warning
+    value: "#d97706"
+  - token: color-danger
+    value: "#dc2626"
+  - token: color-info
+    value: "#2563EB"
+  - token: bg-page
+    value: "#f6f8fb"
+  - token: bg-card
+    value: "#ffffff"
+  - token: bg-hover
+    value: "#f1f5f9"
+  - token: border-light
+    value: "#e2e8f0"
+  - token: text-primary
+    value: "#0f172a"
+  - token: text-secondary
+    value: "#64748b"
+fontTokens:
+  - scene: heading-1
+    size: 20px
+    weight: 600
+  - scene: heading-2
+    size: 18px
+    weight: 600
+  - scene: heading-3
+    size: 16px
+    weight: 500
+  - scene: body
+    size: 14px
+    weight: 400
+  - scene: caption
+    size: 12px
+    weight: 400
+  - scene: button
+    size: 14px
+    weight: 500
+spaceTokens:
+  - token: space-xs
+    value: 4px
+  - token: space-sm
+    value: 8px
+  - token: space-md
+    value: 16px
+  - token: space-lg
+    value: 24px
+  - token: space-xl
+    value: 32px
+visualSignature:
+  - element: blueprint-grid
+    desc: 构件蓝图式层级 网格
+  - element: thin-stroke
+    desc: 细线描边
+  - element: node-dot
+    desc: 蓝图节点
+  - element: card-elevation
+    desc: 卡片层级
+  - element: accent-line
+    desc: 强调线
+keyPageComposition:
+  - page: login
+    brand: true
+  - page: dashboard
+    brand: true
+  - page: biz-requests
+    brand: false
+  - page: lowcode-entities
+    brand: false
+  - page: ai-assistant
+    brand: true
+responsiveBreakpoints:
+  - breakpoint: 375
+    device: mobile
+  - breakpoint: 414
+    device: mobile
+  - breakpoint: 768
+    device: tablet
+  - breakpoint: 1366
+    device: web
+  - breakpoint: 1920
+    device: web-large
+themeExtensions:
+  - theme: default
+    mode: light
+  - theme: dark
+    mode: dark
+  - theme: high-contrast
+    mode: accessible
+  - theme: brand
+    mode: custom
+tokenToCssVar:
+  - token: color-primary
+    cssVar: --yt-color-primary
+  - token: color-success
+    cssVar: --yt-color-success
+  - token: color-warning
+    cssVar: --yt-color-warning
+  - token: color-danger
+    cssVar: --yt-color-danger
+  - token: bg-page
+    cssVar: --yt-bg-page
+  - token: bg-card
+    cssVar: --yt-bg-card
+  - token: text-primary
+    cssVar: --yt-text-primary
+  - token: text-secondary
+    cssVar: --yt-text-secondary
+  - token: border-light
+    cssVar: --yt-border-light
+  - token: space-xs
+    cssVar: --yt-space-xs
+  - token: space-sm
+    cssVar: --yt-space-sm
+  - token: space-md
+    cssVar: --yt-space-md
+  - token: space-lg
+    cssVar: --yt-space-lg
+  - token: space-xl
+    cssVar: --yt-space-xl
+  - token: radius-md
+    cssVar: --yt-radius-md
+  - token: shadow-card
+    cssVar: --yt-shadow-card
+  - token: sidebar-width
+    cssVar: --yutong-sidebar-width
+  - token: yutong-primary
+    cssVar: --yutong-primary
+  - token: yutong-bg-page
+    cssVar: --yutong-bg-page
+  - token: yutong-text-primary
+    cssVar: --yutong-text-primary
+  - token: el-primary
+    cssVar: --el-color-primary
+webRoutes:
+  - route: /login
+    page: 登录页
+  - route: /dashboard
+    page: 工作台
+  - route: /biz/requests
+    page: 业务申请列表
+  - route: /biz/requests/detail
+    page: 申请详情
+  - route: /biz/approvals
+    page: 审批列表
+  - route: /biz/records
+    page: 业务归档
+  - route: /system/users
+    page: 用户管理
+  - route: /system/roles
+    page: 角色管理
+  - route: /system/menus
+    page: 菜单管理
+  - route: /system/dicts
+    page: 字典管理
+  - route: /lowcode/entities
+    page: 实体管理
+  - route: /lowcode/forms
+    page: 表单设计
+  - route: /lowcode/pages
+    page: 页面编排
+  - route: /lowcode/flows
+    page: 流程编排
+  - route: /ai/assistant
+    page: AI 助手
+  - route: /ai/knowledge
+    page: 知识库
+  - route: /ai/models
+    page: 模型配置
+  - route: /workflow/todo
+    page: 待办中心
+  - route: /workflow/done
+    page: 已办中心
+  - route: /monitor/logs
+    page: 操作日志
+  - route: /monitor/metrics
+    page: 指标监控
+  - route: /settings/profile
+    page: 个人设置
+mobileRoutes:
+  - route: /pages/login/index
+    page: 登录页
+  - route: /pages/workbench/index
+    page: 工作台
+  - route: /pages/todo/list
+    page: 待办列表
+  - route: /pages/todo/detail
+    page: 待办详情
+  - route: /pages/biz/handle
+    page: 业务办理
+  - route: /pages/biz/detail
+    page: 业务详情
+  - route: /pages/upload/index
+    page: 上传中心
+  - route: /pages/profile/index
+    page: 我的
+  - route: /pages/settings/index
+    page: 设置
+mobileComponents:
+  - component: OfflineBanner
+    desc: 离线横幅
+  - component: BottomActionBar
+    desc: 底部操作栏
+  - component: StatusBadge
+    desc: 状态徽标
+  - component: FileUploader
+    desc: 文件上传
+  - component: PageState
+    desc: 页面状态
+  - component: SearchForm
+    desc: 搜索表单
+  - component: FormDrawer
+    desc: 抽屉表单
+  - component: NavBar
+    desc: 导航栏
+  - component: ListCard
+    desc: 列表卡片
+webCommonComponents:
+  - component: BaseTable
+    desc: 基础表格
+  - component: SearchForm
+    desc: 搜索表单
+  - component: FormDrawer
+    desc: 抽屉表单
+  - component: FormDialog
+    desc: 弹窗表单
+  - component: StatusBadge
+    desc: 状态徽标
+  - component: StatusTag
+    desc: 历史别名
+  - component: FileUploader
+    desc: 文件上传
+  - component: PageState
+    desc: 页面状态
+  - component: DictSelect
+    desc: 字典选择
+  - component: Permission
+    desc: 权限指令
+deductionRules:
+  - problem: 信息层级混乱
+    deduction: -5
+  - problem: 视觉一致性偏差
+    deduction: -5
+  - problem: 色彩未使用设计令牌
+    deduction: -3
+  - problem: 间距未对齐 4px 网格
+    deduction: -3
+  - problem: 字体字重层级错误
+    deduction: -2
+  - problem: 交互反馈缺失
+    deduction: -4
+  - problem: 空态无引导
+    deduction: -3
+  - problem: 错误态缺少 traceId
+    deduction: -5
+  - problem: 响应式 1366 断点溢出
+    deduction: -4
+  - problem: 移动端 375 适配错位
+    deduction: -4
+  - problem: 44px 点击区不足
+    deduction: -5
+remediationLoop:
+  - phase: walkthrough
+    desc: 走查
+  - phase: record
+    desc: 记录
+  - phase: fix
+    desc: 整改
+  - phase: recheck
+    desc: 复检
+knownDeviations:
+  - id: DEV-L163-001
+    desc: 暗色主题待补
+  - id: DEV-L163-002
+    desc: 部分插图待品牌化
+  - id: DEV-L163-003
+    desc: 移动端离线队列待完善
+  - id: DEV-L163-004
+    desc: 低代码画布性能待优化
+  - id: DEV-L163-005
+    desc: AI 流式响应动画待细化
+codeAlignment:
+  - item: FE-111
+    file: web-admin/src/styles/variables.css
+  - item: FE-112
+    file: web-admin/src/styles/variables.css
+  - item: FE-113
+    file: web-admin/src/styles/variables.css
+  - item: FE-114
+    file: web-admin/src/styles/variables.css
+  - item: FE-115
+    file: web-admin/src/styles/variables.css
+  - item: FE-116
+    file: web-admin/src/styles/variables.css
+  - item: FE-117
+    file: web-admin/src/styles/variables.css
+  - item: FE-118
+    file: web-admin/src/styles/variables.css
+  - item: FE-119
+    file: web-admin/src/styles/variables.css
+  - item: FE-120
+    file: web-admin/src/styles/variables.css
+  - item: FE-121
+    file: web-admin/src/styles/variables.css
+  - item: FE-122
+    file: web-admin/src/styles/variables.css
+  - item: FE-123
+    file: web-admin/src/styles/variables.css
+  - item: FE-124
+    file: web-admin/src/styles/variables.css
+  - item: FE-125
+    file: web-admin/src/styles/variables.css
+  - item: FE-126
+    file: web-admin/src/styles/variables.css
+  - item: FE-127
+    file: web-admin/src/styles/variables.css
+  - item: FE-128
+    file: web-admin/src/styles/variables.css
+  - item: FE-129
+    file: web-admin/src/styles/variables.css
+  - item: FE-130
+    file: web-admin/src/styles/variables.css
+  - item: FE-131
+    file: web-admin/src/styles/variables.css
+  - item: FE-132
+    file: web-admin/src/components/BaseTable.vue
+baseTableStateMachine:
+  states: [idle, loading, success, empty, error, forbidden]
+  transitions: "idle->loading->success|empty|error|forbidden"
+fileUploaderStateMachine:
+  states: [idle, uploading, success, error, forbidden]
+  transitions: "idle->uploading->success|error"
+feStoreDesign:
+  stores: [auth, app, dict, lowcode, ai]
+  trackApi: true
+aestheticScoring:
+  dimensions: [信息层级, 视觉一致性, 交互反馈, 可访问性, 美感]
+  pass: 90分以上
+  fail: 80分
+p0CorePageGating:
+  threshold: 90
+  pages: [/login, /dashboard, /biz/requests]
+brandKeyPages:
+  pages: [/login, /dashboard, /ai/assistant]
+yutongPrefixRule:
+  description: yutong 前缀规则 - CSS 与 Docker 统一
+  cssAliases:
+    - --yutong-primary: var(--yt-color-primary)
+    - --yutong-bg-page: var(--yt-bg-page)
+    - --yutong-text-primary: var(--yt-text-primary)
+    - --yutong-sidebar-width: 220px
+  dockerImages:
+    - yutong-backend-run
+    - yutong-redis
+    - yutong-postgres
+    - yutong-minio
+  network: yutong_default

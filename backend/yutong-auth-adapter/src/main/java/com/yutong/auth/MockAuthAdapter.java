@@ -109,11 +109,14 @@ public class MockAuthAdapter implements AuthAdapter {
             "system:message:list", "system:todo:list",
             "system:import-export-task:list",
             "ai:assistant:use",
+            "ai:feedback:add",
             // GA2-L190: 移动端入口权限码 (MobileController @RequiresPermission), biz 用户为移动端主要使用者
             "mobile:workbench:view", "mobile:todo:list",
             "mobile:biz-request:detail", "mobile:scan:use",
             // GA2-L190: AI 会话列表查询权限 (AiChatController.pageConversations @RequiresPermission)
-            "ai:conversation:list"
+            "ai:conversation:list",
+            // P2-I: AI 会话消息只读 (移动端历史/分支链, listMessages @RequiresPermission ai:conversation:detail)
+            "ai:conversation:detail"
     );
     private static final Set<String> BIZ_ROLES = Set.of("BIZ_USER");
 
@@ -164,7 +167,9 @@ public class MockAuthAdapter implements AuthAdapter {
             // GA2-36: 报表只读权限，验证 viewer 数据范围(TENANT) + 列级脱敏(viewer 不可见敏感字段)
             "report:view", "report:dataset:view",
             // GA2-L190: AI 会话列表只读权限 (按 userId 隔离, viewer 仅看到自己的会话)
-            "ai:conversation:list"
+            "ai:conversation:list",
+            // P2-I: AI 会话消息只读 (移动端历史/分支链, listMessages @RequiresPermission ai:conversation:detail)
+            "ai:conversation:detail"
     );
     private static final Set<String> VIEWER_ROLES = Set.of("VIEWER");
 

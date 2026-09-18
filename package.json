@@ -9,11 +9,17 @@
   },
   "scripts": {
     "dev:web": "pnpm -C web-admin dev",
+    "dev:web-user": "pnpm -C web dev",
+    "dev:web-admin": "pnpm -C web-admin dev",
     "build:web": "pnpm -C web-admin build",
+    "build:web-user": "pnpm -C web build",
+    "build:web-admin": "pnpm -C web-admin build",
     "dev:mobile": "pnpm -C mobile-uniapp dev:h5",
     "lint": "pnpm -r --parallel run lint",
-    "typecheck": "pnpm -r --parallel run typecheck",
-    "checks": "pnpm -C web-admin run lint && pnpm -C mobile-uniapp run lint"
+    "typecheck": "pnpm -r --parallel run type-check",
+    "type-check": "pnpm -r --parallel run type-check",
+    "checks": "pnpm -r --parallel run type-check",
+    "checks:all": "pnpm run checks && pnpm -C mobile-uniapp run test --run && powershell -NoProfile -ExecutionPolicy Bypass -File tools/checks/check-llm-fail-close.ps1 && powershell -NoProfile -ExecutionPolicy Bypass -File tools/checks/check-frontend-mock-leakage.ps1 && cd backend && set JAVA_HOME=C:\\\\Users\\\\Administrator\\\\.jdks\\\\azul-25.0.4.1&& C:\\\\Users\\\\Administrator\\\\.jdks\\\\apache-maven-3.9.11\\\\bin\\\\mvn.cmd -pl yutong-ai-service -am test -Dtest=ReActDecisionParseTest,AiflowEngineCycleTest,CozeAdapterParseTest,AiChatWebSocketHandlerTest,AiToolRegistryTest,AiMemoryServiceTest,EmbeddingServiceTest,GraphExtractionParserTest,McpMarketInstallParseTest,LlmMessageMultimodalTest,OpenAiCompatibleAdapterMultimodalTest,OpenAiCompatibleAdapterContractTest -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false && set JAVA_HOME=C:\\\\Users\\\\Administrator\\\\.jdks\\\\azul-25.0.4.1&& C:\\\\Users\\\\Administrator\\\\.jdks\\\\apache-maven-3.9.11\\\\bin\\\\mvn.cmd -pl yutong-ai-service -am verify -DskipTests"
   },
   "packageManager": "pnpm@11.10.0"
 }

@@ -12,6 +12,7 @@ import com.yutong.common.response.PageResult;
 import com.yutong.common.response.Result;
 import com.yutong.auth.RequiresPermission;
 import com.yutong.common.idempotency.Idempotent;
+import com.yutong.common.ratelimit.RateLimiter;
 import com.yutong.common.trace.TraceContext;
 import com.yutong.system.log.auditable.Auditable;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -52,6 +53,7 @@ public class AiChatController {
      */
     @Operation(summary = "AI 对话", operationId = "chatWithAssistant")
     @RequiresPermission("ai:assistant:use")
+    @RateLimiter(keyPrefix = "ai:chat", permits = 30, windowSeconds = 60)
     @Auditable(operationType = "CHAT", module = "ai", bizType = "ai_chat",
             bizIdExpr = "#result.data.conversationId", content = "AI 对话")
     @Idempotent(resourceType = "ai-chat", resourceIdExpr = "#request.conversationId",
@@ -72,6 +74,7 @@ public class AiChatController {
      */
     @Operation(summary = "AI 对话（SSE 流式）", operationId = "chatWithAssistantStream")
     @RequiresPermission("ai:assistant:use")
+    @RateLimiter(keyPrefix = "ai:chat", permits = 30, windowSeconds = 60)
     @Auditable(operationType = "CHAT", module = "ai", bizType = "ai_chat", content = "AI 对话(SSE流式)")
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamChat(@RequestBody AiChatRequest request) {
@@ -120,5 +123,29 @@ public class AiChatController {
     @PostMapping("/suggestions/apply")
     public Result<String> applySuggestion(@RequestBody ApplySuggestionRequest request) {
         return Result.ok(service.applySuggestion(request), TraceContext.getTraceId());
+    }
+
+    @Operation(summary = "消息反馈 (LIKE/DISLIKE, 空值清除)", operationId = "feedbackAiMessage")
+    @RequiresPermission("ai:assistant:use")
+    @PostMapping("/messages/{id}/feedback")
+    public Result<AiMessage> feedbackMessage(
+            @PathVariable String id,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+        String feedback = body == null ? null : body.get("feedback");
+        return Result.ok(service.feedbackMessage(id, feedback), TraceContext.getTraceId());
+    }
+
+    @Operation(summary = "会话置顶", operationId = "pinAiConversation")
+    @RequiresPermission("ai:assistant:use")
+    @PostMapping("/conversations/{id}/pin")
+    public Result<AiConversation> pinConversation(@PathVariable String id) {
+        return Result.ok(service.pinConversation(id, true), TraceContext.getTraceId());
+    }
+
+    @Operation(summary = "取消会话置顶", operationId = "unpinAiConversation")
+    @RequiresPermission("ai:assistant:use")
+    @PostMapping("/conversations/{id}/unpin")
+    public Result<AiConversation> unpinConversation(@PathVariable String id) {
+        return Result.ok(service.pinConversation(id, false), TraceContext.getTraceId());
     }
 }

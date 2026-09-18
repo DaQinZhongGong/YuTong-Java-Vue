@@ -22,6 +22,11 @@ public class AiMessage extends BaseEntity {
     public static final String ROLE_USER = "user";
     public static final String ROLE_ASSISTANT = "assistant";
 
+    /** 反馈: 赞同 (V049 P2-C) */
+    public static final String FEEDBACK_LIKE = "LIKE";
+    /** 反馈: 反对 (V049 P2-C) */
+    public static final String FEEDBACK_DISLIKE = "DISLIKE";
+
     /** 所属会话 ID */
     private String conversationId;
 
@@ -49,4 +54,11 @@ public class AiMessage extends BaseEntity {
 
     /** 响应延迟（毫秒） */
     private Integer latencyMs;
+
+    /** 用户反馈: LIKE / DISLIKE, null = 未评价 (V049 P2-C 会话管理, 仅 assistant 消息可评价) */
+    private String feedback;
+
+    /** 父消息 ID (V052 P2-C 分支链), 空 = 链首 */
+    @TableField("parent_message_id")
+    private String parentMessageId;
 }

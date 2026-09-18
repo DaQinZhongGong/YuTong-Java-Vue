@@ -370,6 +370,57 @@ if (Test-Path $v011Path) {
     Add-Result 'BA-037' 'WARN' "V011 contract DDL missing"
 }
 
+# BA-037b: V035 AI platform baseline exists (V035-V041 GA)
+$v035Path = Join-Path $projectRoot 'database\migrations\V035__ai_platform_parity_baseline.sql'
+if (Test-Path $v035Path) {
+    Add-Result 'BA-037b' 'PASS' "V035 AI platform baseline exists"
+} else {
+    Add-Result 'BA-037b' 'FAIL' "V035 AI platform baseline missing"
+}
+
+# BA-037c: V036 ai provider parity
+$v036Path = Join-Path $projectRoot 'database\migrations\V036__ai_provider_parity.sql'
+if (Test-Path $v036Path) {
+    Add-Result 'BA-037c' 'PASS' "V036 ai_provider parity exists"
+} else {
+    Add-Result 'BA-037c' 'FAIL' "V036 missing"
+}
+# BA-037d: V037 knowledge RAG parity
+$v037Path = Join-Path $projectRoot 'database\migrations\V037__knowledge_rag_parity.sql'
+if (Test-Path $v037Path) {
+    Add-Result 'BA-037d' 'PASS' "V037 knowledge RAG parity exists"
+} else {
+    Add-Result 'BA-037d' 'FAIL' "V037 missing"
+}
+# BA-037e: V038 MCP/skill parity
+$v038Path = Join-Path $projectRoot 'database\migrations\V038__ai_mcp_skill_parity.sql'
+if (Test-Path $v038Path) {
+    Add-Result 'BA-037e' 'PASS' "V038 MCP/skill parity exists"
+} else {
+    Add-Result 'BA-037e' 'FAIL' "V038 missing"
+}
+# BA-037f: V039 agent/memory parity
+$v039Path = Join-Path $projectRoot 'database\migrations\V039__ai_agent_memory_parity.sql'
+if (Test-Path $v039Path) {
+    Add-Result 'BA-037f' 'PASS' "V039 agent/memory parity exists"
+} else {
+    Add-Result 'BA-037f' 'FAIL' "V039 missing"
+}
+# BA-037g: V040 aiflow parity
+$v040Path = Join-Path $projectRoot 'database\migrations\V040__aiflow_parity.sql'
+if (Test-Path $v040Path) {
+    Add-Result 'BA-037g' 'PASS' "V040 aiflow parity exists"
+} else {
+    Add-Result 'BA-037g' 'FAIL' "V040 missing"
+}
+# BA-037h: V041 media/drama/copilot parity
+$v041Path = Join-Path $projectRoot 'database\migrations\V041__media_drama_copilot_parity.sql'
+if (Test-Path $v041Path) {
+    Add-Result 'BA-037h' 'PASS' "V041 media/drama/copilot parity exists"
+} else {
+    Add-Result 'BA-037h' 'FAIL' "V041 missing"
+}
+
 # BA-038: Backend health check (runtime verification)
 try {
     $healthResp = Invoke-WebRequest -Uri 'http://localhost:8082/actuator/health' -UseBasicParsing -TimeoutSec 5
@@ -434,3 +485,4 @@ $report = [PSCustomObject]@{
 $json = $report | ConvertTo-Json -Depth 10
 [System.IO.File]::WriteAllText($jsonPath, $json, [System.Text.UTF8Encoding]::new($false))
 Write-Host "JSON report: $jsonPath"
+

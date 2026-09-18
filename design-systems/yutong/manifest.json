@@ -1,0 +1,14 @@
+{
+  "name": "yutong",
+  "displayName": "YuTong 雨桐",
+  "version": "1.0.0",
+  "description": "雨润万物，桐生有信 — 商业级全栈底座设计系统。克制、精密、可信。",
+  "tokens": "./tokens.css",
+  "designMd": "./DESIGN.md",
+  "palette": {
+    "primary": "#1A3A5C",
+    "accent": "#2FA08A",
+    "surface": "#F8FAFC"
+  },
+  "provenance": "project-owned, derived from DESIGN.md 9-section schema"
+}

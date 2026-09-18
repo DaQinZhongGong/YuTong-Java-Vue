@@ -34,6 +34,26 @@
       "style": {
         "navigationBarTitleText": "上传队列"
       }
+    },
+    {
+      "path": "pages/ai/chat",
+      "aliasPath": "pages/ai/index",
+      "style": {
+        "navigationBarTitleText": "AI 对话"
+      }
+    },
+    {
+      "path": "pages/ai/conversations",
+      "style": {
+        "navigationBarTitleText": "历史会话"
+      }
+    },
+    {
+      "path": "pages/knowledge/ask",
+      "aliasPath": "pages/knowledge/index",
+      "style": {
+        "navigationBarTitleText": "知识问答"
+      }
     }
   ],
   "subPackages": [
@@ -146,6 +166,10 @@
       {
         "pagePath": "pages/workbench/workbench",
         "text": "工作台"
+      },
+      {
+        "pagePath": "pages/ai/chat",
+        "text": "AI"
       },
       {
         "pagePath": "pages/todo/todo",

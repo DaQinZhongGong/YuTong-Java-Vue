@@ -7,12 +7,14 @@ import com.yutong.common.errorcode.ErrorCode;
 import com.yutong.common.exception.BusinessException;
 import com.yutong.common.response.Result;
 import com.yutong.common.trace.TraceContext;
+import com.yutong.system.auth.online.OnlineUserService;
 import com.yutong.system.auth.refresh.RefreshTokenPayload;
 import com.yutong.system.auth.refresh.RefreshTokenStore;
 import com.yutong.system.log.service.LoginAuditService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -43,12 +45,14 @@ public class AuthController {
     private final AuthAdapter authAdapter;
     private final LoginAuditService loginAuditService;
     private final RefreshTokenStore refreshTokenStore;
+    private final OnlineUserService onlineUserService;
 
     public AuthController(AuthAdapter authAdapter, LoginAuditService loginAuditService,
-                          RefreshTokenStore refreshTokenStore) {
+                          RefreshTokenStore refreshTokenStore, OnlineUserService onlineUserService) {
         this.authAdapter = authAdapter;
         this.loginAuditService = loginAuditService;
         this.refreshTokenStore = refreshTokenStore;
+        this.onlineUserService = onlineUserService;
     }
 
     public record LoginRequest(@NotBlank String username, @NotBlank String password) {}
@@ -59,10 +63,13 @@ public class AuthController {
     @PublicEndpoint
     @Operation(summary = "Mock 登录", operationId = "login")
     @PostMapping("/login")
-    public Result<Map<String, Object>> login(@RequestBody LoginRequest request) {
+    public Result<Map<String, Object>> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         try {
             String token = authAdapter.login(request.username(), request.password());
             AuthContext ctx = authAdapter.current();
+            // P1-D: 注册在线会话 (在线用户监控)
+            onlineUserService.register(token, ctx.userId(), ctx.username(),
+                    ctx.tenantId(), resolveIp(httpRequest), httpRequest.getHeader("User-Agent"));
             // GA2-L175: 登录成功审计 (login_type=MOCK, login_result=SUCCESS)
             loginAuditService.recordLogin(
                     LoginAuditService.TYPE_MOCK,
@@ -135,8 +142,13 @@ public class AuthController {
 
     @Operation(summary = "注销", operationId = "logout")
     @PostMapping("/logout")
-    public Result<Void> logout() {
+    public Result<Void> logout(HttpServletRequest httpRequest) {
         AuthContext ctx = authAdapter.current();
+        // P1-D: 移除在线会话
+        String authHeader = httpRequest.getHeader("Authorization");
+        if (authHeader != null && !authHeader.isBlank()) {
+            onlineUserService.remove(authHeader);
+        }
         // GA2-L175: 退出审计 (login_type=LOGOUT, login_result=SUCCESS)
         // 注：token 摘要在 Mock 模式下无法从 AuthContext 获取，传 null
         loginAuditService.recordLogout(ctx, null);
@@ -352,5 +364,19 @@ public class AuthController {
             }
         }
         return null;
+    }
+
+    /** 解析客户端 IP (支持 X-Forwarded-For / X-Real-IP / remoteAddr)。 */
+    private String resolveIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip != null && !ip.isBlank() && !"unknown".equalsIgnoreCase(ip)) {
+            int idx = ip.indexOf(',');
+            return idx > 0 ? ip.substring(0, idx).trim() : ip.trim();
+        }
+        ip = request.getHeader("X-Real-IP");
+        if (ip != null && !ip.isBlank() && !"unknown".equalsIgnoreCase(ip)) {
+            return ip;
+        }
+        return request.getRemoteAddr();
     }
 }

@@ -193,6 +193,21 @@ const menuGroups = computed<MenuGroup[]>(() => {
         { index: '/code-templates', title: '代码模板管理', icon: Document, permission: 'template:view', license: 'plugin' },
       ],
     },
+    // Phase 6: AI 扩展 — MCP/技能/Agent/AI Flow
+    {
+      index: 'ai-ext',
+      title: 'AI 扩展',
+      icon: Cpu,
+      children: [
+        { index: '/mcp', title: 'MCP 广场', icon: Connection, permission: 'system:config:list', license: 'ai' },
+        { index: '/skill', title: '技能市场', icon: DocumentCopy, permission: 'system:config:list', license: 'ai' },
+        { index: '/agent', title: 'Agent 列表', icon: Share, permission: 'ai:assistant:use', license: 'ai' },
+        { index: '/aiflow', title: 'AI Flow 设计器', icon: Histogram, permission: 'ai:assistant:use', license: 'ai' },
+        { index: '/ai/memories', title: '记忆管理', icon: DocumentCopy, permission: 'ai:assistant:use', license: 'ai' },
+        { index: '/ai/media', title: '多模态生成', icon: Monitor, permission: 'ai:assistant:use', license: 'ai' },
+        { index: '/ai/copilot', title: 'Copilot 草稿', icon: Cpu, permission: 'ai:assistant:use', license: 'ai' },
+      ],
+    },
     // GA2-L177: 平台监控。设计来源: 91-Web基础后台逐页交互详设「服务健康页/缓存概览页」
     // 权限码对齐 contracts/registries/permissions.yaml line 35 (monitor 域)，admin 可见
     {
@@ -314,6 +329,8 @@ function handleSwitchMockUser(type: MockUserType) {
           </el-icon>
         </div>
         <div class="header-right">
+          <!-- P2-G: 主题切换按钮(三态:light/dark/auto) -->
+          <ThemeToggle />
           <!-- GA2-16: dev 模式 Mock 用户切换器 (96 号文档权限矩阵验证) -->
           <el-dropdown v-if="authStore.mockUser" trigger="click" @command="handleSwitchMockUser">
             <el-tag type="warning" size="small" effect="plain" class="mock-badge" role="button" tabindex="0"

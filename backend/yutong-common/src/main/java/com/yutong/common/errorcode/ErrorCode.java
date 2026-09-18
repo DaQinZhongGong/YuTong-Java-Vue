@@ -146,11 +146,16 @@ public enum ErrorCode {
 
     // ===== KB 知识库运营 (35 号文档 P2 知识库运营) =====
     KB_REQUEST_INVALID("KB-400001", 400, "kb.error.requestInvalid"),
+    KB_LOADER_TYPE_UNSUPPORTED("KB-400002", 400, "kb.error.loaderTypeUnsupported"),
+    KB_DOCUMENT_EMPTY("KB-400003", 400, "kb.error.documentEmpty"),
     KB_NOT_FOUND("KB-404001", 404, "kb.error.kbNotFound"),
     KB_DOCUMENT_NOT_FOUND("KB-404002", 404, "kb.error.documentNotFound"),
     KB_CONVERSATION_NOT_FOUND("KB-404003", 404, "kb.error.conversationNotFound"),
+    KB_FILE_NOT_FOUND("KB-404004", 404, "kb.error.fileNotFound"),
     KB_DISABLED("KB-409001", 409, "kb.error.kbDisabled"),
+    KB_DOCUMENT_TYPE_UNSUPPORTED("KB-415001", 415, "kb.error.documentTypeUnsupported"),
     KB_OPS_INTERNAL_ERROR("KB-500001", 500, "kb.error.internal"),
+    KB_DOCUMENT_PARSE_FAILED("KB-500002", 500, "kb.error.documentParseFailed"),
 
     // ===== NOT 实时通知 (35 号文档 P2 实时通知 + 44-实时通信与消息推送设计) =====
     NOT_REQUEST_INVALID("NOT-400001", 400, "notification.error.requestInvalid"),

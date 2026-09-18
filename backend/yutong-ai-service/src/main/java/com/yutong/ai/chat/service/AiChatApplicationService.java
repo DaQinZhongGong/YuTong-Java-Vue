@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yutong.ai.gateway.domain.AiConversation;
 import com.yutong.ai.gateway.domain.AiMessage;
 import com.yutong.ai.gateway.domain.AiProvider;
-import com.yutong.ai.gateway.mapper.AiConversationMapper;
-import com.yutong.ai.gateway.mapper.AiMessageMapper;
+import com.yutong.ai.agent.domain.AiAgent;
+import com.yutong.ai.agent.service.AgentService;
+import com.yutong.ai.gateway.mapper.AiConversationMapper;import com.yutong.ai.gateway.mapper.AiMessageMapper;
 import com.yutong.ai.gateway.service.AiAuditService;
+import com.yutong.ai.gateway.service.AiProviderRegistry;
 import com.yutong.ai.gateway.service.AiToolRegistry;
 import com.yutong.ai.governance.service.AiCostGovernanceService;
 import com.yutong.ai.rag.service.RagRetrievalService;
@@ -17,7 +19,9 @@ import com.yutong.auth.DataScopeResolver;
 import com.yutong.common.auth.CurrentUserContext;
 import com.yutong.common.auth.DataScope;
 import com.yutong.common.auth.DataScopeType;
+import com.yutong.common.errorcode.ErrorCode;
 import com.yutong.common.exception.BusinessConflictException;
+import com.yutong.common.exception.BusinessException;
 import com.yutong.common.exception.ResourceNotFoundException;
 import com.yutong.common.id.IdGenerator;
 import com.yutong.common.response.PageRequest;
@@ -25,6 +29,7 @@ import com.yutong.common.response.PageResult;
 import com.yutong.common.trace.TraceContext;
 import com.yutong.ai.chat.dto.AiChatRequest;
 import com.yutong.ai.chat.dto.AiChatVO;
+import com.yutong.ai.chat.dto.ChatAttachment;
 import com.yutong.ai.chat.dto.AiStreamDeltaData;
 import com.yutong.ai.chat.dto.AiStreamDoneData;
 import com.yutong.ai.chat.dto.AiStreamErrorData;
@@ -32,9 +37,11 @@ import com.yutong.ai.chat.dto.AiStreamEvent;
 import com.yutong.ai.chat.dto.AiStreamMetaData;
 import com.yutong.ai.chat.dto.ApplySuggestionRequest;
 import com.yutong.ai.chat.service.llm.LlmMessage;
+import com.yutong.ai.chat.service.llm.LlmProviderAdapter;
 import com.yutong.ai.chat.service.llm.LlmProviderSelector;
 import com.yutong.ai.chat.service.llm.LlmRequest;
 import com.yutong.ai.chat.service.llm.LlmResponse;
+import com.yutong.ai.chat.service.llm.AiModelPriceResolver;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
@@ -87,8 +94,13 @@ public class AiChatApplicationService {
     private final ObjectMapper objectMapper;
     private final LicenseService licenseService;
     private final LlmProviderSelector providerSelector;
+    private final AiProviderRegistry providerRegistry;
     private final AiCostGovernanceService aiCostGovernanceService;
+    private final com.yutong.ai.chat.service.llm.AiModelPriceResolver aiModelPriceResolver;
     private final DataScopeResolver dataScopeResolver;
+    private final com.yutong.ai.trace.service.AiTraceService aiTraceService;
+    private final com.yutong.ai.memory.service.AiMemoryService aiMemoryService;
+    private final AgentService agentService;
 
     /**
      * GA2-31: SSE 流式专用线程池。
@@ -112,8 +124,13 @@ public class AiChatApplicationService {
                                     ObjectMapper objectMapper,
                                     LicenseService licenseService,
                                     LlmProviderSelector providerSelector,
+                                    AiProviderRegistry providerRegistry,
                                     AiCostGovernanceService aiCostGovernanceService,
-                                    DataScopeResolver dataScopeResolver) {
+                                    com.yutong.ai.chat.service.llm.AiModelPriceResolver aiModelPriceResolver,
+                                    DataScopeResolver dataScopeResolver,
+                                    com.yutong.ai.trace.service.AiTraceService aiTraceService,
+                                    com.yutong.ai.memory.service.AiMemoryService aiMemoryService,
+                                    AgentService agentService) {
         this.conversationMapper = conversationMapper;
         this.messageMapper = messageMapper;
         this.toolRegistry = toolRegistry;
@@ -124,8 +141,13 @@ public class AiChatApplicationService {
         this.objectMapper = objectMapper;
         this.licenseService = licenseService;
         this.providerSelector = providerSelector;
+        this.providerRegistry = providerRegistry;
         this.aiCostGovernanceService = aiCostGovernanceService;
+        this.aiModelPriceResolver = aiModelPriceResolver;
         this.dataScopeResolver = dataScopeResolver;
+        this.aiTraceService = aiTraceService;
+        this.aiMemoryService = aiMemoryService;
+        this.agentService = agentService;
     }
 
     @PreDestroy
@@ -148,9 +170,10 @@ public class AiChatApplicationService {
         AiConversation conversation = getOrCreateConversation(
                 request.getConversationId(), request.getScenario(), userId, tenantId);
 
-        // 2. 保存用户消息
+        // 2. 保存用户消息 (V052: 挂分支父链)
+        String userParentId = resolveParentMessageId(conversation.getId(), request.getParentMessageId());
         AiMessage userMessage = saveMessage(conversation.getId(),
-                AiMessage.ROLE_USER, request.getMessage(), null, null, null, null);
+                AiMessage.ROLE_USER, request.getMessage(), null, null, null, null, userParentId);
 
         // 3. RAG 检索（如果提供了 kbId）
         List<RagRetrievalService.RetrievalResult> retrievalResults = List.of();
@@ -161,6 +184,8 @@ public class AiChatApplicationService {
 
         // 4. 工具调用校验（如果 scenario 涉及工具）
         // GA2-03-5: 白名单校验 + 权限码校验 (TC-SEC-AI-001)。未授权用户调用 AI 工具抛 AUTH-403001。
+        String traceRunId = startChatTrace(request, conversation.getId());
+
         String usedTool = resolveToolForScenario(request.getScenario());
         if (usedTool != null) {
             toolRegistry.validateTool(usedTool);
@@ -186,22 +211,35 @@ public class AiChatApplicationService {
                 .map(this::toCitation)
                 .toList();
 
-        // 6. 生成回复：优先调用真实 LLM 供应商，无可用供应商时降级为 mock
-        LlmResponse llmResponse = generateReply(
-                conversation.getId(), request.getMessage(), request.getScenario(),
-                request.getProviderCode(), request.getModelCode(),
-                retrievalResults, citations);
+        LlmResponse llmResponse;
+        try {
+            llmResponse = generateReply(
+                    conversation.getId(), request.getMessage(), request.getScenario(),
+                    request.getProviderCode(), request.getModelCode(),
+                    request.getProviderType(), request.getModelType(), request.getEndpoint(),
+                    request.getAgentId(),
+                    retrievalResults, citations);
+        } catch (Exception ex) {
+            int failedMs = (int) (System.currentTimeMillis() - startTime);
+            finishChatTrace(traceRunId, false, conversation.getId(), request.getModelCode(), 0, 0, failedMs, ex.getMessage());
+            throw ex;
+        }
         String replyContent = llmResponse.content();
         String providerCode = llmResponse.providerCode();
         String modelCode = llmResponse.modelCode();
         int tokenInput = llmResponse.tokenInput();
         int tokenOutput = llmResponse.tokenOutput();
         int latencyMs = llmResponse.latencyMs();
+        if (llmResponse.isError()) {
+            String err = llmResponse.error() == null ? "llm error" : llmResponse.error().getMessage();
+            finishChatTrace(traceRunId, false, conversation.getId(), modelCode, tokenInput, tokenOutput, latencyMs, err);
+            throw new BusinessException(ErrorCode.AI_PROVIDER_ERROR, "LLM 调用失败: " + err);
+        }
 
-        // 7. 保存 AI 消息
+        // 7. 保存 AI 消息 (V052: 父链指向本轮用户消息)
         AiMessage aiMessage = saveMessage(conversation.getId(),
                 AiMessage.ROLE_ASSISTANT, replyContent, serializeCitations(citations),
-                tokenInput, tokenOutput, latencyMs);
+                tokenInput, tokenOutput, latencyMs, userMessage.getId());
 
         // 7b. GA2-L172: 记录额度使用量（按实际 token 消耗扣减，多退少补）
         licenseService.recordQuotaUsage("ai.monthly.tokens", tokenInput + tokenOutput);
@@ -246,6 +284,7 @@ public class AiChatApplicationService {
         vo.setTokenOutput(tokenOutput);
         vo.setLatencyMs(latencyMs);
         vo.setCreatedTime(OffsetDateTime.now());
+        finishChatTrace(traceRunId, true, conversation.getId(), modelCode, tokenInput, tokenOutput, latencyMs, null);
         return vo;
     }
 
@@ -269,6 +308,29 @@ public class AiChatApplicationService {
      * - 第一版仍是 mock-model，将 generateMockReply 完整回复按 STREAM_CHUNK_SIZE 字符分块推送 delta
      */
     public SseEmitter streamChat(AiChatRequest request) {
+        PreparedStream prepared = prepareStream(request);
+        final SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
+        final String traceId = prepared.traceId;
+        emitter.onCompletion(() -> log.debug("SSE emitter 已完成. traceId={}", traceId));
+        emitter.onTimeout(() -> {
+            log.warn("SSE emitter 超时. traceId={}", traceId);
+            emitter.complete();
+        });
+        emitter.onError(throwable -> log.warn("SSE emitter 异常. traceId={}", traceId, throwable));
+        launchPreparedStream(prepared, new SseChatStreamListener(emitter));
+        return emitter;
+    }
+
+    /**
+     * 流式对话（传输无关）。WebSocket / SSE 共用：鉴权与会话准备在调用线程完成，
+     * 生成在 streamingExecutor 中回调 {@link ChatStreamListener}。
+     */
+    public void streamToListener(AiChatRequest request, ChatStreamListener listener) {
+        PreparedStream prepared = prepareStream(request);
+        launchPreparedStream(prepared, listener);
+    }
+
+    private PreparedStream prepareStream(AiChatRequest request) {
         // 捕获请求线程的 ThreadLocal 快照（子线程无法继承 ThreadLocal）
         final String userId = CurrentUserContext.getUserId();
         final String tenantId = CurrentUserContext.getTenantId();
@@ -287,8 +349,10 @@ public class AiChatApplicationService {
         final String conversationId = conversation.getId();
         final AiConversation finalConversation = conversation;
 
-        saveMessage(conversation.getId(),
-                AiMessage.ROLE_USER, request.getMessage(), null, null, null, null);
+        // V052: 用户消息挂分支父链, id 透传给异步线程供 assistant 回链
+        final String userParentId = resolveParentMessageId(conversation.getId(), request.getParentMessageId());
+        final String reqUserMessageId = saveMessage(conversation.getId(),
+                AiMessage.ROLE_USER, request.getMessage(), null, null, null, null, userParentId).getId();
 
         List<RagRetrievalService.RetrievalResult> tempResults = List.of();
         if (request.getKbId() != null && !request.getKbId().isBlank()) {
@@ -324,149 +388,328 @@ public class AiChatApplicationService {
         final List<AiChatVO.Citation> citations = retrievalResults.stream()
                 .map(this::toCitation)
                 .toList();
-        final LlmResponse llmResponse = generateReply(
-                conversationId, request.getMessage(), request.getScenario(),
-                request.getProviderCode(), request.getModelCode(),
-                retrievalResults, citations);
-        final String replyContent = llmResponse.content();
-        final String providerCode = llmResponse.providerCode();
-        final String modelCode = llmResponse.modelCode();
         final String messageId = IdGenerator.nextId();
+        final String reqProviderCode = request.getProviderCode();
+        final String reqModelCode = request.getModelCode();
+        final String reqProviderType = request.getProviderType();
+        final String reqModelType = request.getModelType();
+        final String reqEndpoint = request.getEndpoint();
+        final String reqScenario = request.getScenario();
+        final String reqMessage = request.getMessage();
+        final List<String> reqImageUrls = ChatAttachment.imageUrls(request.getAttachments());
+        final String reqAgentId = request.getAgentId();
 
-        // 此时所有同步鉴权/校验已完成，PermissionDeniedException 等业务异常已可在创建 emitter 之前抛出，
-        // 由 GlobalExceptionHandler 走同步异常处理路径返回 403 等标准 HTTP 状态码（GA2-31 修复权限拒绝返回 500 的问题）。
-        final SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
+        String traceRunId = startChatTrace(request, conversationId);
+        return new PreparedStream(
+                userId, tenantId, username, deptId, deptPath, dataScopeType, traceId, startTime,
+                conversationId, finalConversation, retrievalResults, usedTool, requiresHumanConfirmation,
+                citations, messageId, reqProviderCode, reqModelCode, reqProviderType, reqModelType,
+                reqEndpoint, reqScenario, reqMessage, reqImageUrls, reqAgentId, reqUserMessageId, traceRunId);
+    }
 
-        // —— 异步阶段: SSE 流式推送 + 流后持久化 ——
+    private void launchPreparedStream(PreparedStream p, ChatStreamListener listener) {
         streamingExecutor.execute(() -> {
-            // 在子线程恢复上下文，保证 MyBatis-Plus MetaObjectHandler 和审计日志能读取到用户/租户信息
-            CurrentUserContext.set(userId, tenantId, username, deptId, deptPath, dataScopeType);
-            TraceContext.setTraceId(traceId);
-
+            CurrentUserContext.set(p.userId, p.tenantId, p.username, p.deptId, p.deptPath, p.dataScopeType);
+            TraceContext.setTraceId(p.traceId);
             int sequence = 0;
+            java.util.Optional<LlmProviderSelector.ProviderRuntime> runtimeOpt =
+                    resolveRuntime(p.reqProviderType, p.reqModelType, p.reqProviderCode, p.reqModelCode, p.reqEndpoint);
+            String effectiveProviderCode = runtimeOpt.map(r -> r.provider().getProviderCode()).orElse("none");
+            String effectiveModelCode = runtimeOpt.map(LlmProviderSelector.ProviderRuntime::defaultModel).orElse("unknown");
             try {
-                // 1. 推送 meta 事件（流开始）
-                AiStreamMetaData metaData = new AiStreamMetaData(modelCode, request.getScenario());
-                sendSseEvent(emitter, AiStreamEvent.TYPE_META, sequence++,
-                        conversationId, messageId, metaData);
-
-                // 2. 推送 citation 事件（每条检索结果一个事件）
-                for (AiChatVO.Citation citation : citations) {
-                    sendSseEvent(emitter, AiStreamEvent.TYPE_CITATION, sequence++,
-                            conversationId, messageId, citation);
+                emitEvent(listener, AiStreamEvent.TYPE_META, sequence++, p.conversationId, p.messageId,
+                        new AiStreamMetaData(effectiveModelCode, p.reqScenario));
+                for (AiChatVO.Citation citation : p.citations) {
+                    emitEvent(listener, AiStreamEvent.TYPE_CITATION, sequence++, p.conversationId, p.messageId, citation);
+                }
+                if (p.usedTool != null) {
+                    emitEvent(listener, AiStreamEvent.TYPE_TOOL, sequence++, p.conversationId, p.messageId,
+                            java.util.Map.of(
+                                    "id", p.usedTool,
+                                    "name", p.usedTool,
+                                    "status", "success",
+                                    "summary", "scenario=" + nvl(p.reqScenario)));
                 }
 
-                // 3. 分块推送 delta（模拟逐字输出）
-                int replyLen = replyContent.length();
-                for (int i = 0; i < replyLen; i += STREAM_CHUNK_SIZE) {
-                    int end = Math.min(i + STREAM_CHUNK_SIZE, replyLen);
-                    String chunk = replyContent.substring(i, end);
-                    AiStreamDeltaData deltaData = new AiStreamDeltaData(chunk);
-                    sendSseEvent(emitter, AiStreamEvent.TYPE_DELTA, sequence++,
-                            conversationId, messageId, deltaData);
-                    // 模拟模型生成延迟，便于前端逐字渲染可见
-                    if (STREAM_CHUNK_INTERVAL_MS > 0) {
-                        Thread.sleep(STREAM_CHUNK_INTERVAL_MS);
+                StringBuilder fullContent = new StringBuilder();
+                java.util.concurrent.atomic.AtomicReference<LlmProviderAdapter.StreamFinish> finishRef =
+                        new java.util.concurrent.atomic.AtomicReference<>(null);
+                java.util.concurrent.atomic.AtomicReference<Throwable> streamErrorRef =
+                        new java.util.concurrent.atomic.AtomicReference<>(null);
+                java.util.concurrent.atomic.AtomicInteger seqRef = new java.util.concurrent.atomic.AtomicInteger(sequence);
+                boolean realStreamAttempted = false;
+                boolean realStreamSucceeded = false;
+
+                if (runtimeOpt.isPresent()) {
+                    realStreamAttempted = true;
+                    LlmProviderSelector.ProviderRuntime runtime = runtimeOpt.get();
+                    List<LlmMessage> messages = buildLlmMessages(
+                            runtime.provider(), p.conversationId, p.reqMessage, p.reqScenario, p.retrievalResults, p.citations, p.reqImageUrls, p.reqAgentId);
+                    LlmRequest llmReq = new LlmRequest(runtime.defaultModel(), messages, 0.7, null, true, p.reqScenario);
+                    try {
+                        runtime.adapter().stream(llmReq,
+                                delta -> {
+                                    if (delta == null || delta.isEmpty()) {
+                                        return;
+                                    }
+                                    fullContent.append(delta);
+                                    try {
+                                        int off = 0;
+                                        while (off < delta.length()) {
+                                            int end = Math.min(off + STREAM_CHUNK_SIZE, delta.length());
+                                            emitEvent(listener, AiStreamEvent.TYPE_DELTA,
+                                                    seqRef.getAndIncrement(), p.conversationId, p.messageId,
+                                                    new AiStreamDeltaData(delta.substring(off, end)));
+                                            off = end;
+                                        }
+                                    } catch (IOException ioe) {
+                                        log.warn("推送流式 delta 失败，终止流. traceId={}", p.traceId, ioe);
+                                        throw new RuntimeException(ioe);
+                                    }
+                                },
+                                finishRef::set,
+                                streamErrorRef::set);
+                        if (streamErrorRef.get() == null) {
+                            realStreamSucceeded = true;
+                        } else {
+                            log.warn("LLM 流式异常，准备降级 mock: provider={} model={} err={}",
+                                    effectiveProviderCode, effectiveModelCode, streamErrorRef.get().getMessage());
+                        }
+                    } catch (Exception e) {
+                        streamErrorRef.set(e);
+                        log.warn("LLM 流式调用异常，降级 mock: provider={} err={}", effectiveProviderCode, e.getMessage());
                     }
+                    sequence = seqRef.get();
                 }
 
-                // 4. 统计 token 用量（流结束后一次性计算）
-                int tokenInput = estimateTokens(request.getMessage());
-                int tokenOutput = estimateTokens(replyContent);
-                int latencyMs = (int) (System.currentTimeMillis() - startTime);
+                if (!runtimeOpt.isPresent()) {
+                    throw new BusinessException(ErrorCode.AI_PROVIDER_ERROR, "未配置可用 LLM 供应商");
+                }
+                if (!realStreamSucceeded || fullContent.length() == 0) {
+                    Throwable err = streamErrorRef.get();
+                    String msg = err == null ? "LLM 流式无输出" : err.getMessage();
+                    throw new BusinessException(ErrorCode.AI_PROVIDER_ERROR, "LLM 流式失败: " + msg);
+                }
+                String replyContent = fullContent.toString();
+                String providerCodeForCost = effectiveProviderCode;
+                String modelCodeForCost = effectiveModelCode;
 
-                // 5. 推送 done 事件（携带 usage 和 requiresHumanConfirmation）
+                int tokenInput;
+                int tokenOutput;
+                LlmProviderAdapter.StreamFinish finish = finishRef.get();
+                if (finish != null && finish.tokenInput() != null && finish.tokenOutput() != null
+                        && (finish.tokenInput() > 0 || finish.tokenOutput() > 0)) {
+                    tokenInput = finish.tokenInput();
+                    tokenOutput = finish.tokenOutput();
+                    if (tokenInput == 0) {
+                        tokenInput = estimateTokens(p.reqMessage);
+                    }
+                    if (tokenOutput == 0) {
+                        tokenOutput = estimateTokens(replyContent);
+                    }
+                } else {
+                    tokenInput = estimateTokens(p.reqMessage);
+                    tokenOutput = estimateTokens(replyContent);
+                }
+                int latencyMs = (int) (System.currentTimeMillis() - p.startTime);
+
+                // P2 8-C: 动态计算本次调用成本 (基于 ai_provider.modelListJson 配置 + 真实 token 用量)
+                String estimatedCostStr = "0";
+                try {
+                    String modelListJson = null;
+                    String priceModelCode = null;
+                    if (p.reqProviderCode != null && !p.reqProviderCode.isBlank()) {
+                        var runtime = providerSelector.selectProvider(p.reqProviderCode, p.reqModelCode);
+                        if (runtime.isPresent() && runtime.get().provider() != null) {
+                            modelListJson = runtime.get().provider().getModelListJson();
+                            priceModelCode = runtime.get().defaultModel() != null
+                                    ? runtime.get().defaultModel() : p.reqModelCode;
+                        }
+                    }
+                    if (priceModelCode == null) priceModelCode = p.reqModelCode;
+                    AiModelPriceResolver.Price price = aiModelPriceResolver.resolvePrice(priceModelCode, modelListJson);
+                    if (price != null && (price.inputCnyPer1k().signum() > 0 || price.outputCnyPer1k().signum() > 0)) {
+                        // input/ output 单价 元/1K tokens, 转换为元 (6 位小数 µ¥)
+                        java.math.BigDecimal cost = price.inputCnyPer1k()
+                                .multiply(java.math.BigDecimal.valueOf(tokenInput))
+                                .divide(java.math.BigDecimal.valueOf(1000), 6, java.math.RoundingMode.HALF_UP)
+                                .add(price.outputCnyPer1k()
+                                        .multiply(java.math.BigDecimal.valueOf(tokenOutput))
+                                        .divide(java.math.BigDecimal.valueOf(1000), 6, java.math.RoundingMode.HALF_UP));
+                        estimatedCostStr = cost.toPlainString();
+                    }
+                } catch (Exception ignored) {
+                    // 成本计算失败不阻塞主流程, 仍写 "0"
+                }
+
                 AiStreamDoneData.AiUsage usage = new AiStreamDoneData.AiUsage(
-                        tokenInput, tokenOutput, latencyMs, "0", "CNY");
-                AiStreamDoneData doneData = new AiStreamDoneData(usage, requiresHumanConfirmation);
-                sendSseEvent(emitter, AiStreamEvent.TYPE_DONE, sequence++,
-                        conversationId, messageId, doneData);
+                        tokenInput, tokenOutput, latencyMs, estimatedCostStr, "CNY");
+                // V052 P2-C: 落库 assistant 消息并回传 messageId, 前端据此挂载反馈按钮
+                AiMessage savedAssistantMessage = saveMessage(p.conversation.getId(),
+                        AiMessage.ROLE_ASSISTANT, replyContent, serializeCitations(p.citations),
+                        tokenInput, tokenOutput, latencyMs, p.reqUserMessageId);
+                String savedAssistantMessageId = savedAssistantMessage.getId();
+                emitEvent(listener, AiStreamEvent.TYPE_DONE, sequence++,
+                        p.conversationId, p.messageId, new AiStreamDoneData(usage, p.requiresHumanConfirmation, savedAssistantMessageId));
 
-                // 6. 保存 AI 消息（流结束后一次性写入，token 用量完整）
-                saveMessage(finalConversation.getId(),
-                        AiMessage.ROLE_ASSISTANT, replyContent, serializeCitations(citations),
-                        tokenInput, tokenOutput, latencyMs);
-
-                // 6b. GA2-L172: 记录额度使用量（70 号文档「额度扣减规则」流结束后按实际 token 结算，多退少补）
                 licenseService.recordQuotaUsage("ai.monthly.tokens", tokenInput + tokenOutput);
+                p.conversation.setLastMessageTime(OffsetDateTime.now());
+                p.conversation.setModelCode(modelCodeForCost);
+                conversationMapper.updateById(p.conversation);
 
-                // 7. 更新会话最后消息时间
-                finalConversation.setLastMessageTime(OffsetDateTime.now());
-                conversationMapper.updateById(finalConversation);
-
-                // 8. 记录工具调用审计
-                if (usedTool != null) {
-                    AiToolRegistry.ToolMeta toolMeta = toolRegistry.getTool(usedTool);
+                if (p.usedTool != null) {
+                    AiToolRegistry.ToolMeta toolMeta = toolRegistry.getTool(p.usedTool);
                     String riskLevel = toolMeta != null ? toolMeta.riskLevel() : "A3";
                     auditService.recordToolCall(
-                            usedTool, riskLevel, userId,
-                            request.getMessage(), replyContent,
-                            buildToolCallSummary(toolMeta, retrievalResults),
-                            "SUCCESS", null, latencyMs, traceId);
+                            p.usedTool, riskLevel, p.userId,
+                            p.reqMessage, replyContent,
+                            buildToolCallSummary(toolMeta, p.retrievalResults),
+                            "SUCCESS", null, latencyMs, p.traceId);
                 }
-
-                // 9. 记录成本日志（流结束后一次性写入，对齐 13 号文档 line 143；GA2-45 实际成本 + 累计）
                 aiCostGovernanceService.recordCostAfterCall(
-                        request.getScenario(), providerCode, modelCode, finalConversation.getId(),
+                        p.reqScenario, providerCodeForCost, modelCodeForCost, p.conversation.getId(),
                         tokenInput, tokenOutput, latencyMs, "SUCCESS");
-
-                // 10. 业务指标埋点
-                platformMetrics.recordAiRequest(tenantId, request.getScenario(), "SUCCESS",
+                platformMetrics.recordAiRequest(p.tenantId, p.reqScenario, "SUCCESS",
                         java.time.Duration.ofMillis(latencyMs));
-                platformMetrics.recordAiTokenUsage(tenantId, providerCode, tokenInput + tokenOutput);
-                if (usedTool != null) {
-                    platformMetrics.recordAiToolCall(tenantId, usedTool, "SUCCESS");
+                platformMetrics.recordAiTokenUsage(p.tenantId, providerCodeForCost, tokenInput + tokenOutput);
+                if (p.usedTool != null) {
+                    platformMetrics.recordAiToolCall(p.tenantId, p.usedTool, "SUCCESS");
                 }
-
-                emitter.complete();
-                log.debug("SSE 流式回复完成. traceId={}, conversationId={}, messageId={}, sequence={}, latencyMs={}",
-                        traceId, conversationId, messageId, sequence, latencyMs);
+                listener.onComplete();
+                finishChatTrace(p.traceRunId, true, p.conversationId, modelCodeForCost, tokenInput, tokenOutput, latencyMs, null);
+                log.debug("流式回复完成. traceId={}, conversationId={}, messageId={}, sequence={}, latencyMs={}, provider={}, model={}, fallback={}",
+                        p.traceId, p.conversationId, p.messageId, sequence, latencyMs, providerCodeForCost, modelCodeForCost, !realStreamSucceeded);
             } catch (Exception ex) {
-                log.error("SSE 流式回复异常. traceId={}, conversationId={}, messageId={}",
-                        traceId, conversationId, messageId, ex);
-                int latencyMs = (int) (System.currentTimeMillis() - startTime);
+                log.error("流式回复异常. traceId={}, conversationId={}, messageId={}",
+                        p.traceId, p.conversationId, p.messageId, ex);
+                int latencyMs = (int) (System.currentTimeMillis() - p.startTime);
                 try {
-                    AiStreamErrorData errorData = new AiStreamErrorData(
-                            "AI-500001",
-                            "ai.chat.stream.error",
-                            traceId,
-                            true);
-                    sendSseEvent(emitter, AiStreamEvent.TYPE_ERROR, sequence++,
-                            conversationId, messageId, errorData);
+                    emitEvent(listener, AiStreamEvent.TYPE_ERROR, sequence++,
+                            p.conversationId, p.messageId,
+                            new AiStreamErrorData("AI-500001", "ai.chat.stream.error", p.traceId, true));
                 } catch (Exception sendErr) {
-                    log.warn("推送 SSE error 事件失败. traceId={}", traceId, sendErr);
+                    log.warn("推送 error 事件失败. traceId={}", p.traceId, sendErr);
                 }
-                platformMetrics.recordAiRequest(tenantId, request.getScenario(), "FAILED",
+                platformMetrics.recordAiRequest(p.tenantId, p.reqScenario, "FAILED",
                         java.time.Duration.ofMillis(latencyMs));
-                emitter.completeWithError(ex);
+                finishChatTrace(p.traceRunId, false, p.conversationId, effectiveModelCode, 0, 0, latencyMs, ex.getMessage());
+                listener.onFailure(ex);
             } finally {
-                // 清理子线程 ThreadLocal，避免线程池复用导致的上下文泄漏
                 CurrentUserContext.clear();
                 TraceContext.clear();
             }
         });
-
-        // 客户端断开/超时回调（仅记录日志，不强制中断生成）
-        emitter.onCompletion(() -> log.debug("SSE emitter 已完成. traceId={}", traceId));
-        emitter.onTimeout(() -> {
-            log.warn("SSE emitter 超时. traceId={}", traceId);
-            emitter.complete();
-        });
-        emitter.onError(throwable -> log.warn("SSE emitter 异常. traceId={}", traceId, throwable));
-
-        return emitter;
     }
 
-    /** 推送一个 SSE 事件。封装事件信封构造和 SseEmitter.send 调用。 */
-    private void sendSseEvent(SseEmitter emitter, String eventType, int sequence,
-                              String conversationId, String messageId, Object data) throws IOException {
-        AiStreamEvent event = new AiStreamEvent(
+    private void emitEvent(ChatStreamListener listener, String eventType, int sequence,
+                           String conversationId, String messageId, Object data) throws IOException {
+        listener.onEvent(new AiStreamEvent(
                 AiStreamEvent.buildEventId(messageId, sequence),
-                eventType, sequence, conversationId, messageId, data);
-        emitter.send(SseEmitter.event()
-                .id(event.getEventId())
-                .name(eventType)
-                .data(event));
+                eventType, sequence, conversationId, messageId, data));
+    }
+
+    private static final class SseChatStreamListener implements ChatStreamListener {
+        private final SseEmitter emitter;
+
+        private SseChatStreamListener(SseEmitter emitter) {
+            this.emitter = emitter;
+        }
+
+        @Override
+        public void onEvent(AiStreamEvent event) throws IOException {
+            emitter.send(SseEmitter.event()
+                    .id(event.getEventId())
+                    .name(event.getEventType())
+                    .data(event));
+        }
+
+        @Override
+        public void onComplete() {
+            emitter.complete();
+        }
+
+        @Override
+        public void onFailure(Throwable error) {
+            emitter.completeWithError(error);
+        }
+    }
+
+    private record PreparedStream(
+            String userId,
+            String tenantId,
+            String username,
+            String deptId,
+            String deptPath,
+            DataScopeType dataScopeType,
+            String traceId,
+            long startTime,
+            String conversationId,
+            AiConversation conversation,
+            List<RagRetrievalService.RetrievalResult> retrievalResults,
+            String usedTool,
+            boolean requiresHumanConfirmation,
+            List<AiChatVO.Citation> citations,
+            String messageId,
+            String reqProviderCode,
+            String reqModelCode,
+            String reqProviderType,
+            String reqModelType,
+            String reqEndpoint,
+            String reqScenario,
+            String reqMessage,
+            List<String> reqImageUrls,
+            String reqAgentId,
+            String reqUserMessageId,
+            String traceRunId
+    ) {}
+
+    private String startChatTrace(AiChatRequest request, String conversationId) {
+        if (aiTraceService == null) {
+            return null;
+        }
+        try {
+            com.yutong.ai.trace.domain.AiTraceRun run = new com.yutong.ai.trace.domain.AiTraceRun();
+            run.setTraceType(com.yutong.ai.trace.domain.AiTraceRun.TYPE_LLM);
+            run.setInputJson("{\"conversationId\":\"" + nvl(conversationId)
+                    + "\",\"scenario\":\"" + nvl(request.getScenario())
+                    + "\",\"kbId\":\"" + nvl(request.getKbId()) + "\"}");
+            return aiTraceService.startRun(run).getId();
+        } catch (Exception e) {
+            log.debug("start chat trace skipped: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private void finishChatTrace(String runId, boolean success, String conversationId, String modelCode,
+                                 int tokenInput, int tokenOutput, int latencyMs, String error) {
+        if (aiTraceService == null || runId == null || runId.isBlank()) {
+            return;
+        }
+        try {
+            com.yutong.ai.trace.domain.AiTraceNode node = new com.yutong.ai.trace.domain.AiTraceNode();
+            node.setRunId(runId);
+            node.setNodeType("llm");
+            node.setStatus(success ? com.yutong.ai.trace.domain.AiTraceNode.STATUS_SUCCESS
+                    : com.yutong.ai.trace.domain.AiTraceNode.STATUS_FAILED);
+            node.setLatencyMs(latencyMs);
+            node.setOutputJson("{\"model\":\"" + nvl(modelCode) + "\",\"tokenInput\":" + tokenInput
+                    + ",\"tokenOutput\":" + tokenOutput + "}");
+            if (error != null) {
+                node.setErrorMessage(error);
+            }
+            aiTraceService.addNode(node);
+            aiTraceService.finishRun(runId,
+                    success ? com.yutong.ai.trace.domain.AiTraceRun.STATUS_SUCCESS
+                            : com.yutong.ai.trace.domain.AiTraceRun.STATUS_FAILED,
+                    "{\"conversationId\":\"" + nvl(conversationId) + "\",\"model\":\"" + nvl(modelCode) + "\"}",
+                    latencyMs, error);
+        } catch (Exception e) {
+            log.debug("finish chat trace skipped: {}", e.getMessage());
+        }
+    }
+
+    private static String nvl(String s) {
+        return s == null ? "" : s.replace("\"", "");
     }
 
     /**
@@ -497,6 +740,8 @@ public class AiChatApplicationService {
                 .eq(AiConversation::getTenantId, CurrentUserContext.getTenantId())
                 .eq(AiConversation::getUserId, CurrentUserContext.getUserId())
                 .eq(scenario != null && !scenario.isBlank(), AiConversation::getScenario, scenario)
+                // V049 P2-C: 置顶会话排最前, 其次按最后消息时间
+                .orderByDesc(AiConversation::getPinned)
                 .orderByDesc(AiConversation::getLastMessageTime);
         // GA2-DS: 接入 DataScope (SELF scope)，对非 admin 角色按 created_by 过滤
         applyDataScope(wrapper, scope);
@@ -541,6 +786,42 @@ public class AiChatApplicationService {
                 new LambdaQueryWrapper<AiMessage>()
                         .eq(AiMessage::getConversationId, conversationId)
                         .orderByAsc(AiMessage::getCreatedTime));
+    }
+
+    /**
+     * 消息反馈 (P2-C 会话管理)。
+     * 仅 assistant 消息可评价; feedback 为 LIKE/DISLIKE, 空值 = 清除评价。
+     * 不存在 → 404; 非 assistant → 400 (失败关闭, 不静默忽略)。
+     */
+    public AiMessage feedbackMessage(String messageId, String feedback) {
+        AiMessage message = messageMapper.selectById(messageId);
+        if (message == null) {
+            throw new ResourceNotFoundException("消息不存在: " + messageId);
+        }
+        if (!AiMessage.ROLE_ASSISTANT.equals(message.getRole())) {
+            throw new BusinessException(ErrorCode.SYS_PARAM_INVALID, "仅 assistant 回复可评价");
+        }
+        if (feedback == null || feedback.isBlank()) {
+            message.setFeedback(null);
+        } else {
+            String normalized = feedback.trim().toUpperCase();
+            if (!AiMessage.FEEDBACK_LIKE.equals(normalized) && !AiMessage.FEEDBACK_DISLIKE.equals(normalized)) {
+                throw new BusinessException(ErrorCode.SYS_PARAM_INVALID, "feedback 仅支持 LIKE/DISLIKE");
+            }
+            message.setFeedback(normalized);
+        }
+        messageMapper.updateById(message);
+        return message;
+    }
+
+    /**
+     * 会话置顶 / 取消置顶 (P2-C 会话管理)。
+     */
+    public AiConversation pinConversation(String id, boolean pinned) {
+        AiConversation conversation = getConversation(id);
+        conversation.setPinned(pinned);
+        conversationMapper.updateById(conversation);
+        return conversation;
     }
 
     /**
@@ -607,6 +888,13 @@ public class AiChatApplicationService {
     private AiMessage saveMessage(String conversationId, String role, String content,
                                   String citationJson, Integer tokenInput,
                                   Integer tokenOutput, Integer latencyMs) {
+        return saveMessage(conversationId, role, content, citationJson,
+                tokenInput, tokenOutput, latencyMs, null);
+    }
+
+    private AiMessage saveMessage(String conversationId, String role, String content,
+                                  String citationJson, Integer tokenInput,
+                                  Integer tokenOutput, Integer latencyMs, String parentMessageId) {
         AiMessage message = new AiMessage();
         message.setId(IdGenerator.nextId());
         message.setTenantId(CurrentUserContext.getTenantId());
@@ -619,8 +907,28 @@ public class AiChatApplicationService {
         message.setTokenInput(tokenInput);
         message.setTokenOutput(tokenOutput);
         message.setLatencyMs(latencyMs);
+        message.setParentMessageId(parentMessageId);
         messageMapper.insert(message);
         return message;
+    }
+
+    /**
+     * 校验父消息归属 (V052 P2-C 分支链)。
+     * 空 → null (链首); 不存在 → 404; 非同一会话 → 400 (防跨会话挂靠)。
+     */
+    String resolveParentMessageId(String conversationId, String parentMessageId) {
+        if (parentMessageId == null || parentMessageId.isBlank()) {
+            return null;
+        }
+        String pid = parentMessageId.trim();
+        AiMessage parent = messageMapper.selectById(pid);
+        if (parent == null) {
+            throw new ResourceNotFoundException("父消息不存在: " + pid);
+        }
+        if (!conversationId.equals(parent.getConversationId())) {
+            throw new BusinessException(ErrorCode.SYS_PARAM_INVALID, "父消息不属于当前会话");
+        }
+        return pid;
     }
 
     private String resolveToolForScenario(String scenario) {
@@ -634,35 +942,248 @@ public class AiChatApplicationService {
     }
 
     /**
-     * 生成 AI 回复：优先调用真实 LLM 供应商，失败时尝试下一个启用的非 mock 供应商，全部失败时降级为 mock。
-     * 设计来源: P6-02 免费 LLM 供应商集成
+     * 生成 AI 回复（兼容旧调用）：优先调用真实 LLM 供应商，失败降级 mock。
      */
     private LlmResponse generateReply(String conversationId, String userMessage, String scenario,
                                       String providerCode, String modelCode,
                                       List<RagRetrievalService.RetrievalResult> retrievalResults,
                                       List<AiChatVO.Citation> citations) {
-        var providerOpt = providerSelector.selectProvider(providerCode, modelCode);
-        if (providerOpt.isEmpty()) {
-            return mockReply(userMessage, scenario, retrievalResults, 0);
-        }
+        return generateReply(conversationId, userMessage, scenario,
+                providerCode, modelCode, null, null, null, null,
+                retrievalResults, citations);
+    }
 
-        var runtime = providerOpt.get();
-        LlmResponse response = callProvider(runtime, conversationId, userMessage, scenario, retrievalResults, citations);
-        if (!response.isError()) {
+    /**
+     * P0-2 真实 LLM 直连闭环：按 providerType 分发，优先经 AiProviderRegistry.selectPrimary(providerType, modelType)
+     * 取 endpoint/apiKey/model；非流式调用 OpenAiCompatibleAdapter.chatCompletion 同步返回；失败降级 mock。
+     * <p>
+     * 分发规则:
+     * - openai/deepseek/qianwen/zhipu/ollama/minimax/atlas/xiaomi → OPENAI_COMPATIBLE HTTP 流（经 registry）
+     * - dify/coze → 协议为 CUSTOM 时尝试 OPENAI_COMPATIBLE 透传，失败降级 mock（后续可扩展专用适配器）
+     * - custom_api → 透传 endpoint/model（请求中 endpoint 覆盖 DB，modelCode 透传不校验 modelListJson）
+     * - providerType 为空时根据 providerCode 推断，仍走 registry；无匹配则回退 providerSelector.selectProvider
+     */
+    private LlmResponse generateReply(String conversationId, String userMessage, String scenario,
+                                      String providerCode, String modelCode,
+                                      String providerType, String modelType, String customEndpoint,
+                                      String agentId,
+                                      List<RagRetrievalService.RetrievalResult> retrievalResults,
+                                      List<AiChatVO.Citation> citations) {
+        // 1) 优先经 registry 按 providerType/modelType 分发
+        var registryRuntime = resolveRuntime(providerType, modelType, providerCode, modelCode, customEndpoint);
+        if (registryRuntime.isPresent()) {
+            var runtime = registryRuntime.get();
+            long start = System.currentTimeMillis();
+            LlmResponse response = callProvider(runtime, conversationId, userMessage, scenario, retrievalResults, citations, List.of(), agentId);
+            if (!response.isError()) {
+                log.debug("registry LLM 调用成功: providerType={} providerCode={} model={} latency={}",
+                        providerType, runtime.provider().getProviderCode(), runtime.defaultModel(),
+                        System.currentTimeMillis() - start);
+                return response;
+            }
+            log.warn("registry LLM 调用失败，尝试备选供应商链: providerType={} providerCode={} err={}",
+                    providerType, runtime.provider().getProviderCode(),
+                    response.error() != null ? response.error().getMessage() : "unknown");
+            // 尝试同 providerType 下的备选供应商（健康度+优先级排序）
+            String effectiveProviderType = normalizeProviderType(providerType, providerCode);
+            String effectiveModelType = normalizeModelType(modelType);
+            List<AiProvider> candidates = providerRegistry.resolve(effectiveProviderType, effectiveModelType);
+            for (AiProvider cand : candidates) {
+                if (cand.getProviderCode() != null && cand.getProviderCode().equals(runtime.provider().getProviderCode())) {
+                    continue;
+                }
+                String candApiKey = providerSelector.resolveApiKey(cand.getApiKeyRef());
+                String protocol = cand.getProtocol() == null || cand.getProtocol().isBlank()
+                        ? com.yutong.ai.chat.service.llm.OpenAiCompatibleAdapter.PROTOCOL : cand.getProtocol();
+                // dify/coze CUSTOM 协议暂按 OPENAI_COMPATIBLE 透传，日志提示
+                if (("dify".equalsIgnoreCase(effectiveProviderType) || "coze".equalsIgnoreCase(effectiveProviderType))
+                        && !"OPENAI_COMPATIBLE".equalsIgnoreCase(protocol)) {
+                    log.debug("dify/coze 供应商使用 OPENAI_COMPATIBLE 透传: providerCode={} protocol={}",
+                            cand.getProviderCode(), protocol);
+                    protocol = com.yutong.ai.chat.service.llm.OpenAiCompatibleAdapter.PROTOCOL;
+                }
+                String effModel = resolveEffectiveModel(modelCode, cand, effectiveProviderType);
+                if (effModel == null || effModel.isBlank()) continue;
+                var candAdapter = providerSelector.buildAdapter(protocol, cand, candApiKey);
+                if (candAdapter == null) continue;
+                var candRuntime = new LlmProviderSelector.ProviderRuntime(cand, candAdapter, effModel);
+                LlmResponse candResp = callProvider(candRuntime, conversationId, userMessage, scenario, retrievalResults, citations, List.of(), agentId);
+                if (!candResp.isError()) {
+                    return candResp;
+                }
+                log.warn("备选 registry 供应商失败: providerCode={} model={} err={}",
+                        cand.getProviderCode(), effModel,
+                        candResp.error() != null ? candResp.error().getMessage() : "unknown");
+            }
+            // 全部 registry 候选失败，回退到旧 selector 链
+            LlmResponse nextResponse = tryNextEnabledProvider(
+                    runtime.provider().getProviderCode(), conversationId, userMessage, scenario,
+                    retrievalResults, citations, agentId);
+            if (nextResponse != null && !nextResponse.isError()) {
+                return nextResponse;
+            }
+            log.warn("所有真实 LLM 供应商均失败: lastProvider={} model={} err={}",
+                    runtime.provider().getProviderCode(), runtime.defaultModel(),
+                    response.error() != null ? response.error().getMessage() : "unknown");
             return response;
         }
 
+        // 2) 无 registry 匹配，回退到旧 selector（按 providerCode 精确）
+        var providerOpt = providerSelector.selectProvider(providerCode, modelCode);
+        if (providerOpt.isEmpty()) {
+            return LlmResponse.error("none", modelCode == null || modelCode.isBlank() ? "unknown" : modelCode,
+                    new BusinessException(ErrorCode.AI_PROVIDER_ERROR, "未配置可用 LLM 供应商"));
+        }
+        var runtime = providerOpt.get();
+        LlmResponse response = callProvider(runtime, conversationId, userMessage, scenario, retrievalResults, citations, List.of(), agentId);
+        if (!response.isError()) {
+            return response;
+        }
         LlmResponse nextResponse = tryNextEnabledProvider(
                 runtime.provider().getProviderCode(), conversationId, userMessage, scenario,
-                retrievalResults, citations);
+                retrievalResults, citations, agentId);
         if (nextResponse != null && !nextResponse.isError()) {
             return nextResponse;
         }
-
-        log.warn("所有真实 LLM 供应商均失败，降级为 mock: lastProvider={} model={} err={}",
+        log.warn("所有真实 LLM 供应商均失败: lastProvider={} model={} err={}",
                 runtime.provider().getProviderCode(), runtime.defaultModel(),
                 response.error() != null ? response.error().getMessage() : "unknown");
-        return mockReply(userMessage, scenario, retrievalResults, response.latencyMs());
+        return response;
+    }
+
+    /**
+     * 按 providerType/modelType 优先经 registry 解析真实供应商运行时；支持 custom_api 透传 endpoint/model。
+     */
+    private java.util.Optional<LlmProviderSelector.ProviderRuntime> resolveRuntime(
+            String providerType, String modelType, String providerCode, String modelCode, String customEndpoint) {
+        String effectiveProviderType = normalizeProviderType(providerType, providerCode);
+        String effectiveModelType = normalizeModelType(modelType);
+
+        // custom_api 透传：若请求携带 endpoint 则构造临时 provider，modelCode 直接透传
+        if ("custom_api".equalsIgnoreCase(effectiveProviderType) && customEndpoint != null && !customEndpoint.isBlank()) {
+            AiProvider ephemeral = new AiProvider();
+            ephemeral.setId(IdGenerator.nextId());
+            ephemeral.setTenantId(CurrentUserContext.getTenantId());
+            ephemeral.setProviderCode("custom_api");
+            ephemeral.setProviderName("Custom API (透传)");
+            ephemeral.setProviderType("custom_api");
+            ephemeral.setModelType(effectiveModelType);
+            ephemeral.setEndpoint(customEndpoint.trim());
+            // 尝试复用已配置的 custom_api 供应商的 apiKeyRef
+            String apiKeyRef = "";
+            try {
+                var existing = providerRegistry.selectPrimary("custom_api", effectiveModelType);
+                if (existing.isPresent() && existing.get().getApiKeyRef() != null) {
+                    apiKeyRef = existing.get().getApiKeyRef();
+                }
+            } catch (Exception e) {
+                log.debug("custom_api 透传查询已有供应商失败: {}", e.getMessage());
+            }
+            ephemeral.setApiKeyRef(apiKeyRef);
+            ephemeral.setProtocol(com.yutong.ai.chat.service.llm.OpenAiCompatibleAdapter.PROTOCOL);
+            ephemeral.setEnabled(true);
+            ephemeral.setPriority(0);
+            String effectiveModel = (modelCode != null && !modelCode.isBlank()) ? modelCode.trim() : "custom-model";
+            ephemeral.setModelListJson("[{\"code\":\"" + effectiveModel + "\",\"name\":\"" + effectiveModel + "\"}]");
+            String apiKey = providerSelector.resolveApiKey(ephemeral.getApiKeyRef());
+            var adapter = providerSelector.buildAdapter(ephemeral.getProtocol(), ephemeral, apiKey);
+            if (adapter != null) {
+                return java.util.Optional.of(new LlmProviderSelector.ProviderRuntime(ephemeral, adapter, effectiveModel));
+            }
+        }
+
+        if (effectiveProviderType != null) {
+            try {
+                var opt = providerRegistry.selectPrimary(effectiveProviderType, effectiveModelType);
+                if (opt.isPresent()) {
+                    AiProvider p = opt.get();
+                    // custom_api 且请求有 endpoint 覆盖
+                    if ("custom_api".equalsIgnoreCase(effectiveProviderType)
+                            && customEndpoint != null && !customEndpoint.isBlank()) {
+                        p.setEndpoint(customEndpoint.trim());
+                    }
+                    String apiKey = providerSelector.resolveApiKey(p.getApiKeyRef());
+                    String protocol = p.getProtocol();
+                    if (protocol == null || protocol.isBlank()) {
+                        protocol = com.yutong.ai.chat.service.llm.OpenAiCompatibleAdapter.PROTOCOL;
+                    }
+                    // dify/coze 分别适配：当前以 OPENAI_COMPATIBLE 透传实现，后续可替换为专用适配器
+                    if (("dify".equalsIgnoreCase(effectiveProviderType) || "coze".equalsIgnoreCase(effectiveProviderType))
+                            && !"OPENAI_COMPATIBLE".equalsIgnoreCase(protocol)) {
+                        log.info("dify/coze 供应商协议 {} 按 OPENAI_COMPATIBLE 透传: providerCode={}",
+                                protocol, p.getProviderCode());
+                        protocol = com.yutong.ai.chat.service.llm.OpenAiCompatibleAdapter.PROTOCOL;
+                    }
+                    String effModel = resolveEffectiveModel(modelCode, p, effectiveProviderType);
+                    if (effModel == null || effModel.isBlank()) {
+                        effModel = providerSelector.extractDefaultModel(p.getModelListJson());
+                    }
+                    if (effModel == null || effModel.isBlank()) {
+                        effModel = modelCode;
+                    }
+                    if (effModel != null && !effModel.isBlank()) {
+                        var adapter = providerSelector.buildAdapter(protocol, p, apiKey);
+                        if (adapter != null) {
+                            return java.util.Optional.of(new LlmProviderSelector.ProviderRuntime(p, adapter, effModel));
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("registry 解析失败，回退到 selector: providerType={} modelType={} err={}",
+                        effectiveProviderType, effectiveModelType, e.getMessage());
+            }
+        }
+        return java.util.Optional.empty();
+    }
+
+    private String normalizeProviderType(String providerType, String providerCode) {
+        if (providerType != null && !providerType.isBlank()) {
+            return providerType.trim().toLowerCase();
+        }
+        if (providerCode != null && !providerCode.isBlank()) {
+            String pc = providerCode.trim().toLowerCase();
+            // 若 providerCode 本身就是 11 枚举之一，直接作为 providerType
+            if (com.yutong.ai.gateway.domain.AiProviderType.isValid(pc)) {
+                return pc;
+            }
+        }
+        return null;
+    }
+
+    private String normalizeModelType(String modelType) {
+        if (modelType == null || modelType.isBlank()) {
+            return "chat";
+        }
+        return modelType.trim().toLowerCase();
+    }
+
+    private String resolveEffectiveModel(String requestedModelCode, AiProvider provider, String effectiveProviderType) {
+        if (requestedModelCode == null || requestedModelCode.isBlank()) {
+            return providerSelector.extractDefaultModel(provider.getModelListJson());
+        }
+        // custom_api 透传：不校验 modelListJson，直接使用请求的 modelCode
+        if ("custom_api".equalsIgnoreCase(effectiveProviderType)) {
+            return requestedModelCode.trim();
+        }
+        // 其余类型：校验是否在 modelListJson 中，存在则直接用，否则回退默认
+        String normalized = requestedModelCode.trim();
+        if (provider.getModelListJson() != null && !provider.getModelListJson().isBlank()) {
+            try {
+                com.fasterxml.jackson.databind.JsonNode arr = objectMapper.readTree(provider.getModelListJson());
+                if (arr.isArray()) {
+                    for (com.fasterxml.jackson.databind.JsonNode node : arr) {
+                        if (normalized.equals(node.path("code").asText(null))) {
+                            return normalized;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.debug("modelListJson 解析失败，按默认处理: {}", e.getMessage());
+            }
+        }
+        log.debug("请求模型不在供应商列表中，使用默认模型: requested={} providerCode={}",
+                normalized, provider.getProviderCode());
+        return providerSelector.extractDefaultModel(provider.getModelListJson());
     }
 
     /**
@@ -671,14 +1192,15 @@ public class AiChatApplicationService {
     private LlmResponse tryNextEnabledProvider(String excludeProviderCode, String conversationId,
                                                String userMessage, String scenario,
                                                List<RagRetrievalService.RetrievalResult> retrievalResults,
-                                               List<AiChatVO.Citation> citations) {
+                                               List<AiChatVO.Citation> citations,
+                                               String agentId) {
         List<LlmProviderSelector.ProviderRuntime> providers = providerSelector.selectEnabledProviders();
         for (LlmProviderSelector.ProviderRuntime runtime : providers) {
             String code = runtime.provider().getProviderCode();
             if (code == null || code.equals(excludeProviderCode)) {
                 continue;
             }
-            LlmResponse response = callProvider(runtime, conversationId, userMessage, scenario, retrievalResults, citations);
+            LlmResponse response = callProvider(runtime, conversationId, userMessage, scenario, retrievalResults, citations, List.of(), agentId);
             if (!response.isError()) {
                 return response;
             }
@@ -692,20 +1214,13 @@ public class AiChatApplicationService {
     private LlmResponse callProvider(LlmProviderSelector.ProviderRuntime runtime, String conversationId,
                                      String userMessage, String scenario,
                                      List<RagRetrievalService.RetrievalResult> retrievalResults,
-                                     List<AiChatVO.Citation> citations) {
+                                     List<AiChatVO.Citation> citations,
+                                     List<String> imageUrls,
+                                     String agentId) {
         List<LlmMessage> messages = buildLlmMessages(
-                runtime.provider(), conversationId, userMessage, scenario, retrievalResults, citations);
+                runtime.provider(), conversationId, userMessage, scenario, retrievalResults, citations, imageUrls, agentId);
         LlmRequest llmRequest = new LlmRequest(runtime.defaultModel(), messages, 0.7, null, false, scenario);
         return runtime.adapter().chat(llmRequest);
-    }
-
-    private LlmResponse mockReply(String userMessage, String scenario,
-                                  List<RagRetrievalService.RetrievalResult> retrievalResults,
-                                  int latencyMs) {
-        String mockContent = generateMockReply(userMessage, scenario, retrievalResults);
-        return new LlmResponse("mock-local", "mock-chat", mockContent,
-                estimateTokens(userMessage), estimateTokens(mockContent),
-                latencyMs, "stop", null);
     }
 
     /**
@@ -718,12 +1233,15 @@ public class AiChatApplicationService {
     private List<LlmMessage> buildLlmMessages(AiProvider provider, String conversationId, String userMessage,
                                               String scenario,
                                               List<RagRetrievalService.RetrievalResult> retrievalResults,
-                                              List<AiChatVO.Citation> citations) {
-        String systemPrompt = buildSystemPrompt(scenario, retrievalResults, citations);
+                                              List<AiChatVO.Citation> citations,
+                                              List<String> imageUrls,
+                                              String agentId) {
+        String systemPrompt = buildSystemPrompt(scenario, retrievalResults, citations, agentId);
 
         // 匿名免 Key 供应商（Pollinations 等）通常只接受单条 user 消息，且对内容长度/格式敏感。
         // 折叠 system prompt 会显著增加内容长度并触发其免费额度限制，因此仅发送原始用户消息，
         // 由 OpenAiCompatibleAdapter 再做长度截断兜底（P6-02 免费 LLM 供应商集成）。
+        // 匿名 provider 不支持多模态（没有视觉模型），仍走纯文本
         boolean anonymousMode = isAnonymousProvider(provider);
         if (anonymousMode) {
             return List.of(LlmMessage.user(userMessage));
@@ -748,7 +1266,11 @@ public class AiChatApplicationService {
                 messages.add(LlmMessage.assistant(content));
             }
         }
-        messages.add(LlmMessage.user(userMessage));
+        // 当前用户消息：若有图片 URL 走 OpenAI 多模态 content（P1-7），否则纯文本
+        LlmMessage currentUser = (imageUrls == null || imageUrls.isEmpty())
+                ? LlmMessage.user(userMessage)
+                : LlmMessage.userMultimodal(userMessage, imageUrls);
+        messages.add(currentUser);
         return messages;
     }
 
@@ -767,10 +1289,54 @@ public class AiChatApplicationService {
         return "pollinations".equals(provider.getProviderCode());
     }
 
+    /**
+     * 解析聊天请求中的 agentId 为系统提示块 (P2-G AgentSelect 闭环)。
+     * <ul>
+     *   <li>agentId 为空 → null (默认助手, 行为不变);</li>
+     *   <li>Agent 不存在 → 404 (AgentService.getAgent 抛 ResourceNotFoundException);</li>
+     *   <li>Agent 未发布 (非 PUBLISHED) → 400, 禁止用草稿 Agent 对话 (失败关闭);</li>
+     *   <li>已发布 → 返回身份 + systemPrompt 块, 由 buildSystemPrompt 置于基础安全规则之前。</li>
+     * </ul>
+     */
+    String resolveAgentPromptBlock(String agentId) {
+        if (agentId == null || agentId.isBlank()) {
+            return null;
+        }
+        AiAgent agent = agentService.getAgent(agentId.trim());
+        if (!AiAgent.STATUS_PUBLISHED.equals(agent.getStatus())) {
+            throw new BusinessException(ErrorCode.SYS_PARAM_INVALID,
+                    "Agent 未发布, 不可用于对话: " + agentId.trim());
+        }
+        return buildAgentPromptBlock(agent);
+    }
+
+    /**
+     * 构造 Agent 身份提示块 (纯函数, 便于单测)。
+     */
+    static String buildAgentPromptBlock(AiAgent agent) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("当前 Agent: ").append(nvl(agent.getAgentName())).append(" (").append(nvl(agent.getAgentCode())).append(")\n");
+        if (agent.getSystemPrompt() != null && !agent.getSystemPrompt().isBlank()) {
+            sb.append(agent.getSystemPrompt().trim()).append("\n");
+        }
+        return sb.toString();
+    }
+
     private String buildSystemPrompt(String scenario,
                                      List<RagRetrievalService.RetrievalResult> retrievalResults,
                                      List<AiChatVO.Citation> citations) {
+        return buildSystemPrompt(scenario, retrievalResults, citations, null);
+    }
+
+    private String buildSystemPrompt(String scenario,
+                                     List<RagRetrievalService.RetrievalResult> retrievalResults,
+                                     List<AiChatVO.Citation> citations,
+                                     String agentId) {
         StringBuilder sb = new StringBuilder();
+        String agentBlock = resolveAgentPromptBlock(agentId);
+        if (agentBlock != null) {
+            sb.append(agentBlock);
+        }
         sb.append("你是 YuTong 平台的 AI 助手，基于企业知识库为用户提供专业、准确的回答。\n");
         sb.append("规则：\n");
         sb.append("1. 仅基于提供的知识库内容回答，不确定时明确说明。\n");
@@ -778,6 +1344,16 @@ public class AiChatApplicationService {
         sb.append("3. 涉及修改生产数据的建议必须说明需要人工确认。\n");
         if (scenario != null && !scenario.isBlank()) {
             sb.append("当前场景: ").append(scenario).append("\n");
+        }
+        if (aiMemoryService != null) {
+            try {
+                String recalled = aiMemoryService.recallForChat(CurrentUserContext.getUserId());
+                if (recalled != null && !recalled.isBlank()) {
+                    sb.append('\n').append(recalled);
+                }
+            } catch (Exception e) {
+                log.debug("memory recall skipped: {}", e.getMessage());
+            }
         }
         if (!retrievalResults.isEmpty()) {
             sb.append("\n参考内容:\n");
@@ -788,26 +1364,6 @@ public class AiChatApplicationService {
                         .append(" (得分: ").append(String.format("%.2f", r.score())).append(")\n");
             }
         }
-        return sb.toString();
-    }
-
-    private String generateMockReply(String userMessage, String scenario,
-                                     List<RagRetrievalService.RetrievalResult> results) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("收到您的问题: \"").append(userMessage).append("\"\n\n");
-        sb.append("场景: ").append(scenario != null ? scenario : "通用问答").append("\n\n");
-        if (results.isEmpty()) {
-            sb.append("当前未检索到相关文档内容。如果是知识库问题，请先入库文档。\n");
-        } else {
-            sb.append("已检索到 ").append(results.size()).append(" 条相关内容:\n");
-            for (int i = 0; i < results.size(); i++) {
-                RagRetrievalService.RetrievalResult r = results.get(i);
-                sb.append(i + 1).append(". ").append(r.docTitle())
-                        .append(" - ").append(r.sectionPath())
-                        .append(" (得分: ").append(String.format("%.2f", r.score())).append(")\n");
-            }
-        }
-        sb.append("\n[模拟回复] 这是 v0.4 的模拟响应，真实模型集成将在 v0.5 实现。");
         return sb.toString();
     }
 

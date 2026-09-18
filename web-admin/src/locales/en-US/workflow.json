@@ -161,5 +161,9 @@
     "workflow.definition.bpmn.managerApproval": "Department Manager Approval",
     "workflow.definition.bpmn.amountCheck": "Amount Check",
     "workflow.definition.bpmn.bossApproval": "General Manager Approval",
-    "workflow.definition.bpmn.end": "End"
+    "workflow.definition.bpmn.end": "End",
+    "workflow.error.definitionNotFound": "Workflow definition not found",
+    "workflow.error.instanceCompleted": "Workflow instance already completed",
+    "workflow.error.permissionDenied": "No workflow operation permission",
+    "workflow.error.taskNotAssignee": "Task is not assigned to current user"
 }

@@ -1685,6 +1685,23 @@ export interface AiProvider {
   priority?: number
   /** 该供应商下可用模型数量 (后端不直接返回时可由前端从 modelListJson 计算) */
   modelCount?: number
+  // ===== V036 平价能力 扩展 (对齐 backend AiProvider + V036 DDL) =====
+  /** 供应商类型 11 枚举: openai/deepseek/qianwen/zhipu/ollama/minimax/atlas/xiaomi/dify/coze/custom_api */
+  providerType?: string
+  /** 主模型类型 9 枚举: chat/image/vector/reranker/audio/text/video/ppt/music */
+  modelType?: string
+  /** AI 应用平台: dify/coze/fastgpt/null (null/空=直连) */
+  platform?: string | null
+  /** 支持的模型类型列表 JSON 数组，如 ["chat","vector"] */
+  modelTypeListJson?: string
+  /** 多模态能力 JSON，如 {"image":true,"video":false,"audio":true,"ppt":false} 映射 /media/* */
+  multimodalCapabilities?: string
+  /** 健康状态: UNKNOWN/HEALTHY/UNHEALTHY/DEGRADED */
+  healthStatus?: string
+  /** 最近一次健康检查时间 */
+  healthCheckedTime?: string
+  /** 厂商特定配置 JSON (vendor-specific) */
+  configJson?: string
   /** 创建时间 (ISO-8601) */
   createdTime?: string
   /** 更新时间 (ISO-8601) */
@@ -1707,5 +1724,124 @@ export interface AiProviderHealth {
   errorMessage?: string
   /** 最近一次检查时间 (ISO-8601) */
   checkedAt?: string
+}
+
+/** CMS 内容 (后端 CmsContent 实体, P2-F 6-A)。GET /cms/contents 分页元素。 */
+export interface CmsContent {
+  id: string
+  title: string
+  slug: string
+  contentMd?: string
+  contentHtml?: string
+  summary?: string
+  category?: string
+  tags?: string
+  /** 状态机 DRAFT → PUBLISHED → ARCHIVED */
+  status?: string
+  authorId?: string
+  viewCount?: number
+  publishedAt?: string
+  createdTime?: string
+  updatedTime?: string
+}
+
+/** CMS 内容保存请求 (后端 SaveCmsContentRequest)。POST /cms/contents 创建/更新共用, id 为空=创建。 */
+export interface SaveCmsContent {
+  id?: string
+  title: string
+  slug: string
+  contentMd: string
+  summary?: string
+  category?: string
+  tags?: string
+  status?: string
+}
+
+/** 租户套餐 (后端 SysTenantPackage 实体, P2-F 6-B)。GET /tenant/packages 分页元素。 */
+export interface SysTenantPackage {
+  id: string
+  packageCode: string
+  packageName: string
+  description?: string
+  priceCnyPerPeriod?: number
+  periodMonths?: number
+  /** 状态机 DRAFT → ACTIVE → ARCHIVED */
+  status?: string
+  menuIdsJson?: string
+  quotaJson?: string
+  sortNo?: number
+  publishedAt?: string
+  createdTime?: string
+  updatedTime?: string
+}
+
+/** 租户套餐保存请求 (后端 SaveTenantPackageRequest)。POST /tenant/packages 创建/更新共用。 */
+export interface SaveTenantPackage {
+  id?: string
+  packageCode: string
+  packageName: string
+  description?: string
+  priceCnyPerPeriod?: number
+  periodMonths?: number
+  status?: string
+  menuIdsJson?: string
+  quotaJson?: string
+  sortNo?: number
+}
+
+/** 租户注册表 (后端 SysTenant 实体, P2-F 租户列表)。GET /tenants 分页元素。 */
+export interface SysTenant {
+  id: string
+  tenantCode: string
+  companyName: string
+  contactUserName?: string
+  contactPhone?: string
+  licenseNumber?: string
+  address?: string
+  domain?: string
+  intro?: string
+  packageId?: string
+  expireTime?: string
+  /** 账号上限, -1 = 不限制 */
+  accountCount?: number
+  /** 状态机 NORMAL 正常 / DISABLED 停用 */
+  status?: string
+  createdTime?: string
+  updatedTime?: string
+}
+
+/** 租户保存请求 (后端 SaveTenantRequest)。POST /tenants 创建/更新共用, 编码创建后不可改。 */
+export interface SaveTenant {
+  id?: string
+  tenantCode: string
+  companyName: string
+  contactUserName?: string
+  contactPhone?: string
+  licenseNumber?: string
+  address?: string
+  domain?: string
+  intro?: string
+  packageId?: string
+  expireTime?: string
+  accountCount?: number
+  status?: string
+}
+
+/** OAuth2 客户端 (后端 SysClient 实体, P2-F 6-C)。GET /oauth/clients 分页元素。 */
+export interface SysOAuthClient {
+  id: string
+  clientId: string
+  /** 列表接口不返回明文密钥, 仅 reset-secret 本次响应可见 */
+  clientSecret?: string
+  clientName?: string
+  grantTypes?: string
+  deviceType?: string
+  accessTokenTtl?: number
+  refreshTokenTtl?: number
+  redirectUris?: string
+  /** 状态 ENABLE/DISABLE */
+  status?: string
+  createdTime?: string
+  updatedTime?: string
 }
 

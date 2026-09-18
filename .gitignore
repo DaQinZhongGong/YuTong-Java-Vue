@@ -1,17 +1,11 @@
-# Compiled class file
+# Compiled / logs
 *.class
-
-# Log file
 *.log
 logs/
-
-# BlueJ files
 *.ctxt
-
-# Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
-# Package Files #
+# Packages
 *.jar
 *.war
 *.nar
@@ -20,7 +14,7 @@ logs/
 *.tar.gz
 *.rar
 
-# virtual machine crash logs
+# JVM crash
 hs_err_pid*
 replay_pid*
 
@@ -33,54 +27,97 @@ replay_pid*
 .project
 .classpath
 .settings/
+.*
+!.gitignore
+!.gitattributes
+!.gitleaks.toml
+!.editorconfig
+!.dockerignore
+!.env.example
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Backend
+# Backend build
 backend/**/target/
 backend/**/build/
 backend/**/*.class
 backend/**/dependency-reduced-pom.xml
 backend/**/overlays/
+**/target/
+**/surefire-reports/
+**/failsafe-reports/
 
 # Frontend
 node_modules/
+web/dist/
 web-admin/dist/
 mobile-uniapp/dist/
 mobile-uniapp/unpackage/
 docs-site/dist/
 .pnpm-store/
+web-admin/dist-old-*/
+**/test-results/
+**/playwright-report/
+*.tsbuildinfo
+vite.config.js.timestamp-*.mjs
+web-admin/tsc-out.txt
+web-admin/tsc2.txt
+web-admin/tsc-out.txt.bak
+web-admin/tsc2.txt.bak
 
 # Env / secrets
-#.env
-#.env.local
-#.env.*.local
-# 环境配置文件（非敏感但统一不提交，仅保留 .env.example 模板）
-#**/.env.development
-#**/.env.production
-#**/.env.e2e
-#**/.env.test
 *.pem
 *.key
 deploy/.env
+**/.env.local
+**/.env.*.local
+**/secrets/
+**/*.lic
+**/license.key
 
-# VitePress 构建缓存与误建目录
+# docs-site
 docs-site/.vitepress/cache/
 docs-site/--port/
-# docs-site 文档站整体不纳入版本控制（用户决策 2026-08-04）
 docs-site/
+/docs
 
-# 一次性临时文件（调试/测试遗留）
+# Temp
 **/.tmp-*
 web-admin/.tmp-*
+explain.json
+tmp-poll.json
+test_write.txt
+tools/checks/check-llm-fail-close.ps1.bak3
+tools/checks/check-llm-fail-close.ps1.bak4
 
-# Build / reports / evidence (keep dirs, ignore generated content)
+# Local seed scratch scripts (not Flyway R__ seeds)
+database/seed/_*
+database/seed/do_insert.ps1
+database/seed/_test_small.txt
+
+# Vite config compile artifacts (source is vite.config.ts)
+web-admin/vite.config.js
+web-admin/vite.config.d.ts
+web/vite.config.js
+web/vite.config.d.ts
+mobile-uniapp/vite.config.js
+mobile-uniapp/vite.config.d.ts
+
+# TS incremental build info
+**/*.tsbuildinfo
+
+# Local docs copy (project docs live in YuTong-Java-Docs / .agents)
+/docs
+
+# Build reports (keep structure)
 build/reports/**/*
+!build/reports/
+!build/reports/**/
 !build/reports/**/.gitkeep
 
-# Docker volumes
+# Docker
 deploy/data/
 
 # Coverage
@@ -88,28 +125,28 @@ coverage/
 *.lcov
 .nyc_output/
 
-# Local tool caches / IDE state (never commit)
+# Local caches
 .m2/
 .pnpm-store-e2e/
 .reasonix/
 .workbuddy/
-
-# Ad-hoc review / analysis artifacts
 .harness-run/
 .harness-evidence/
 harness-insights.md
 
-# Debug / test leftovers
-explain.json
-tmp-poll.json
-test_write.txt
+# External references
+reference-downloads/
+.ai-reference/
+docs/reference/
 
-# Symlink to docs-site (accidental root entry)
-docs
+# Worktrees / agent scratch
+.worktrees/
+.mimocode/
+**/.claude/
+**/.codex/
 
-# Frontend build & test artifacts
-web-admin/dist-old-*/
-**/test-results/
-**/playwright-report/
-*.tsbuildinfo
-vite.config.js.timestamp-*.mjs
+# Internal research notes (do not ship)
+.agents/
+
+COMMIT_MSG*.txt
+

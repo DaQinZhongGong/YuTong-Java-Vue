@@ -46,4 +46,20 @@ public class AiDocumentChunk extends BaseEntity {
 
     /** ACL 标签 JSON */
     private String aclTagsJson;
+
+    // ===== P2-E 知识库 RAG 深度 (2026-09-03) =====
+
+    /**
+     * 起始字符偏移 (基于原始文档纯文本, 0-based, char 索引)
+     * 用于前端高亮回溯, 引用 RAG 命中片段在原文位置
+     */
+    @com.baomidou.mybatisplus.annotation.TableField("start_offset")
+    private Integer startOffset;
+
+    /**
+     * 结束字符偏移 (基于原始文档纯文本, 0-based, char 索引, 不含)
+     * 与 startOffset 配合使用: chunkText = docText.substring(startOffset, endOffset)
+     */
+    @com.baomidou.mybatisplus.annotation.TableField("end_offset")
+    private Integer endOffset;
 }

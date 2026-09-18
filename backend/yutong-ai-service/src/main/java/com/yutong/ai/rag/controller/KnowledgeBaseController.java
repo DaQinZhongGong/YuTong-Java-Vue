@@ -1,6 +1,7 @@
 package com.yutong.ai.rag.controller;
 
 import com.yutong.ai.rag.domain.AiKnowledgeBase;
+import com.yutong.ai.rag.dto.UpdateRetrievalConfigRequest;
 import com.yutong.ai.rag.service.KnowledgeBaseApplicationService;
 import com.yutong.common.response.PageRequest;
 import com.yutong.common.response.PageResult;
@@ -69,5 +70,16 @@ public class KnowledgeBaseController {
     @PostMapping("/{id}/disable")
     public Result<AiKnowledgeBase> disable(@PathVariable String id, @RequestParam Integer version) {
         return Result.ok(service.disable(id, version), TraceContext.getTraceId());
+    }
+
+    @Operation(summary = "更新检索配置 (混合权重/数量/门限, ACTIVE 可直接调参实时生效)",
+            operationId = "updateAiKnowledgeBaseRetrievalConfig")
+    @RequiresPermission("ai:knowledge-base:edit")
+    @PatchMapping("/{id}/retrieval-config")
+    public Result<AiKnowledgeBase> updateRetrievalConfig(
+            @PathVariable String id, @RequestBody UpdateRetrievalConfigRequest req) {
+        return Result.ok(service.updateRetrievalConfig(
+                id, req.getHybridEnabled(), req.getHybridVectorWeight(),
+                req.getHybridTopK(), req.getHybridMinScore()), TraceContext.getTraceId());
     }
 }

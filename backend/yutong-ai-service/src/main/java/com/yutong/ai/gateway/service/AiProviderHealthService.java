@@ -43,7 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 实现约束:
  * - 使用 Java 原生 java.net.http.HttpClient，不引入新依赖。
  * - 健康检查是只读操作，不修改任何数据。
- * - mock-local 供应商直接返回 ok，不发起网络请求。
+ * - mock-local 已退役：不发起网络请求，标记 unreachable。
  * - 线程池在 @PreDestroy 中关闭，daemon 线程不阻止 JVM 退出。
  */
 @Service
@@ -234,7 +234,7 @@ public class AiProviderHealthService {
 
     /**
      * 对单个供应商执行健康检查。
-     * - mock-local 直接返回 ok。
+     * - mock-local 已退役，标记 unreachable。
      * - 其余供应商构造极短的 OpenAI 兼容 chat 请求（max_tokens=1）探测可达性与默认模型可用性。
      * 单供应商超时受 maxSingleTimeoutMs 上限约束。
      */
@@ -243,8 +243,8 @@ public class AiProviderHealthService {
         String providerName = provider.getProviderName();
 
         if (MOCK_PROVIDER_CODE.equals(providerCode)) {
-            log.info("health check skip mock provider: providerCode={}", providerCode);
-            return ProviderHealthResult.ok(providerCode, providerName, 0, null, true);
+            log.info("health check reject retired mock provider: providerCode={}", providerCode);
+            return ProviderHealthResult.fail(providerCode, providerName, "mock-local 已退役，禁止作为生产供应商");
         }
 
         String endpoint = provider.getEndpoint();

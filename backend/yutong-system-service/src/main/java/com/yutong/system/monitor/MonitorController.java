@@ -499,4 +499,83 @@ public class MonitorController {
     private interface ComponentProbe {
         String probe() throws Exception;
     }
+
+    /**
+     * Redis INFO 详情 — 内存/客户端/统计信息, 用于前端 ECharts 图表。
+     * 落点: 业界同类实现 CacheController Redis 图表 + ADR 0005 P2。
+     */
+    @Operation(summary = "Redis INFO 详情", operationId = "getRedisInfo")
+    @RequiresPermission("monitor:cache:view")
+    @GetMapping("/cache/redis-info")
+    public Result<Map<String, Object>> redisInfo() {
+        String traceId = TraceContext.getTraceId();
+        Map<String, Object> data = new LinkedHashMap<>();
+        try {
+            // Memory
+            Properties memory = redis.execute((RedisCallback<Properties>) conn -> conn.info("memory"));
+            data.put("usedMemory", parseLong(memory.getProperty("used_memory", "0")));
+            data.put("usedMemoryRss", parseLong(memory.getProperty("used_memory_rss", "0")));
+            data.put("usedMemoryPeak", parseLong(memory.getProperty("used_memory_peak", "0")));
+            data.put("usedMemoryLua", parseLong(memory.getProperty("used_memory_lua", "0")));
+            data.put("maxMemory", parseLong(memory.getProperty("maxmemory", "0")));
+            data.put("maxMemoryPolicy", memory.getProperty("maxmemory_policy", "noeviction"));
+
+            // Clients
+            Properties clients = redis.execute((RedisCallback<Properties>) conn -> conn.info("clients"));
+            data.put("connectedClients", parseLong(clients.getProperty("connected_clients", "0")));
+            data.put("blockedClients", parseLong(clients.getProperty("blocked_clients", "0")));
+
+            // Stats
+            Properties stats = redis.execute((RedisCallback<Properties>) conn -> conn.info("stats"));
+            data.put("totalConnectionsReceived", parseLong(stats.getProperty("total_connections_received", "0")));
+            data.put("totalCommandsProcessed", parseLong(stats.getProperty("total_commands_processed", "0")));
+            data.put("keyspaceHits", parseLong(stats.getProperty("keyspace_hits", "0")));
+            data.put("keyspaceMisses", parseLong(stats.getProperty("keyspace_misses", "0")));
+            data.put("expiredKeys", parseLong(stats.getProperty("expired_keys", "0")));
+            data.put("evictedKeys", parseLong(stats.getProperty("evicted_keys", "0")));
+
+            // Keyspace
+            Properties keyspace = redis.execute((RedisCallback<Properties>) conn -> conn.info("keyspace"));
+            long totalKeys = 0;
+            List<Map<String, Object>> dbList = new ArrayList<>();
+            for (String key : keyspace.stringPropertyNames()) {
+                if (key.startsWith("db")) {
+                    String val = keyspace.getProperty(key);
+                    Map<String, Object> db = new LinkedHashMap<>();
+                    db.put("db", key);
+                    // 格式: keys=N,expires=M,avg_ttl=...
+                    for (String pair : val.split(",")) {
+                        String[] kv = pair.split("=");
+                        if (kv.length == 2) {
+                            db.put(kv[0].trim(), parseLong(kv[1].trim()));
+                            if ("keys".equals(kv[0].trim())) {
+                                totalKeys += parseLong(kv[1].trim());
+                            }
+                        }
+                    }
+                    dbList.add(db);
+                }
+            }
+            data.put("dbs", dbList);
+            data.put("totalKeys", totalKeys);
+
+            // Server
+            Properties server = redis.execute((RedisCallback<Properties>) conn -> conn.info("server"));
+            data.put("redisVersion", server.getProperty("redis_version", ""));
+            data.put("uptimeInSeconds", parseLong(server.getProperty("uptime_in_seconds", "0")));
+
+        } catch (Exception e) {
+            log.warn("[Monitor] redisInfo failed: {}", e.getMessage());
+            data.put("error", e.getMessage());
+        }
+        return Result.ok(data, traceId);
+    }
+
+    private long parseLong(String s) {
+        try {
+            return Long.parseLong(s.trim());
+        } catch (Exception e) {
+            return 0;
+        }
+    }
 }

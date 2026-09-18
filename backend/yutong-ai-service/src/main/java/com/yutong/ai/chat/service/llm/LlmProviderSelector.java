@@ -3,6 +3,7 @@ package com.yutong.ai.chat.service.llm;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yutong.ai.gateway.domain.AiProvider;
+import com.yutong.ai.gateway.domain.AiProviderType;
 import com.yutong.ai.gateway.mapper.AiProviderMapper;
 import com.yutong.common.auth.CurrentUserContext;
 import org.slf4j.Logger;
@@ -148,13 +149,30 @@ public class LlmProviderSelector {
 
     /**
      * 创建指定供应商的适配器。
+     * 支持 OpenAI 兼容、Dify、Coze，providerType 优先于 protocol。
      */
     public LlmProviderAdapter buildAdapter(String protocol, AiProvider provider, String apiKey) {
+        // providerType 优先（V036 parity: provider_type=dify/coze 时强制对应适配器）
+        String providerType = provider != null ? provider.getProviderType() : null;
+        if (providerType != null && !providerType.isBlank()) {
+            if (AiProviderType.DIFY.getCode().equalsIgnoreCase(providerType.trim())) {
+                return new DifyAdapter(provider, apiKey, objectMapper);
+            }
+            if (AiProviderType.COZE.getCode().equalsIgnoreCase(providerType.trim())) {
+                return new CozeAdapter(provider, apiKey, objectMapper);
+            }
+        }
         String p = protocol == null ? OpenAiCompatibleAdapter.PROTOCOL : protocol;
         if (OpenAiCompatibleAdapter.PROTOCOL.equalsIgnoreCase(p)) {
             return new OpenAiCompatibleAdapter(provider, apiKey, objectMapper);
         }
-        log.warn("不支持的 LLM 协议: protocol={}", protocol);
+        if (DifyAdapter.PROTOCOL.equalsIgnoreCase(p) || AiProviderType.DIFY.getCode().equalsIgnoreCase(p)) {
+            return new DifyAdapter(provider, apiKey, objectMapper);
+        }
+        if (CozeAdapter.PROTOCOL.equalsIgnoreCase(p) || AiProviderType.COZE.getCode().equalsIgnoreCase(p)) {
+            return new CozeAdapter(provider, apiKey, objectMapper);
+        }
+        log.warn("不支持的 LLM 协议: protocol={} providerType={}", protocol, providerType);
         return null;
     }
 

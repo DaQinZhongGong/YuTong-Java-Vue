@@ -36,6 +36,8 @@
       <view v-if="checkPermission('biz:contract:list')" class="shortcut" role="button" aria-label="合同" @click="goContracts"><text class="shortcut__icon" aria-hidden="true">📄</text><text class="shortcut__text">合同</text></view>
       <view v-if="checkPermission('report:view')" class="shortcut" role="button" aria-label="报表" @click="goReports"><text class="shortcut__icon" aria-hidden="true">📊</text><text class="shortcut__text">报表</text></view>
       <view v-if="checkPermission('plugin:view')" class="shortcut" role="button" aria-label="插件市场" @click="goPlugins"><text class="shortcut__icon" aria-hidden="true">🔌</text><text class="shortcut__text">插件市场</text></view>
+      <view class="shortcut" role="button" aria-label="创作大师" @click="goCreator"><text class="shortcut__icon" aria-hidden="true">✍️</text><text class="shortcut__text">创作大师</text></view>
+      <view class="shortcut" role="button" aria-label="专业助理" @click="goAssistant"><text class="shortcut__icon" aria-hidden="true">🤖</text><text class="shortcut__text">专业助理</text></view>
     </view>
 
     <view class="workbench__section">
@@ -178,6 +180,16 @@ function goReports() {
 }
 function goPlugins() {
   uni.navigateTo({ url: '/pages/plugins/index' });
+}
+function goCreator() {
+  // 创作大师: 跳转聊天页并预填创作提示词
+  const prompt = encodeURIComponent('你是一位专业的文案创作大师，擅长撰写各类文案、故事、诗歌、营销文案等。请告诉我你想创作什么类型的内容，我会帮你完成。')
+  uni.navigateTo({ url: `/pages/ai/chat?appName=${encodeURIComponent('创作大师')}&systemPrompt=${prompt}` });
+}
+function goAssistant() {
+  // 专业助理: 跳转聊天页并预填助理提示词
+  const prompt = encodeURIComponent('你是一位全能的专业助理，擅长回答各类问题、提供建议、整理信息、翻译、编程辅助等。请告诉我你需要什么帮助。')
+  uni.navigateTo({ url: `/pages/ai/chat?appName=${encodeURIComponent('专业助理')}&systemPrompt=${prompt}` });
 }
 function goDetail(id: string) {
   uni.navigateTo({ url: `/pages/biz/detail?id=${id}` });

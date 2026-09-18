@@ -1,5 +1,5 @@
 import service from './request'
-import type { InvPage } from './types'
+import type { InvPage, PageResult } from './types'
 
 /**
  * 知识库运营 API。设计来源: 35-样例业务矩阵扩展设计 P2 知识库运营。
@@ -117,4 +117,111 @@ export function getKbConversation(id: string): Promise<KbConversationLog> {
 /** 重新索引文档 (验证文档导入能力) */
 export function reindexKbDocument(id: string): Promise<void> {
   return service.post(`/kb/documents/${id}/reindex`) as unknown as Promise<void>
+}
+
+// ==================== 知识图谱 ====================
+
+export interface KnowledgeGraph {
+  id: string
+  kbId?: string
+  name: string
+  status: string // DRAFT / BUILDING / READY / FAILED
+  graphJson?: string
+  entityCount?: number
+  relationCount?: number
+  remark?: string
+  createdTime?: string
+  updatedTime?: string
+  version?: number
+}
+
+export interface KnowledgeGraphSegment {
+  id: string
+  graphId: string
+  sourceChunkId?: string
+  entityJson?: string
+  relationJson?: string
+  createdTime?: string
+}
+
+export interface GraphNode {
+  id: string
+  label: string
+  type?: string
+  props?: Record<string, unknown>
+}
+
+export interface GraphEdge {
+  source: string
+  target: string
+  relation: string
+  props?: Record<string, unknown>
+}
+
+export interface GraphData {
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+}
+
+export function listKnowledgeGraphs(params: {
+  page?: number
+  size?: number
+  kbId?: string
+  status?: string
+  keyword?: string
+}): Promise<PageResult<KnowledgeGraph>> {
+  return service.get('/knowledge-graph', { params }) as unknown as Promise<PageResult<KnowledgeGraph>>
+}
+
+export function getKnowledgeGraph(id: string): Promise<KnowledgeGraph> {
+  return service.get(`/knowledge-graph/${id}`) as unknown as Promise<KnowledgeGraph>
+}
+
+export function queryKnowledgeGraph(id: string): Promise<KnowledgeGraph> {
+  return service.get(`/knowledge-graph/${id}/query`) as unknown as Promise<KnowledgeGraph>
+}
+
+export function createKnowledgeGraph(data: Partial<KnowledgeGraph>): Promise<KnowledgeGraph> {
+  return service.post('/knowledge-graph', data) as unknown as Promise<KnowledgeGraph>
+}
+
+export function buildKnowledgeGraph(id: string): Promise<KnowledgeGraph> {
+  return service.post(`/knowledge-graph/${id}/build`) as unknown as Promise<KnowledgeGraph>
+}
+
+export function listKnowledgeGraphSegments(id: string): Promise<KnowledgeGraphSegment[]> {
+  return service.get(`/knowledge-graph/${id}/segments`) as unknown as Promise<KnowledgeGraphSegment[]>
+}
+
+/** 兼容任务描述的别名 */
+export const listGraph = listKnowledgeGraphs
+export const createGraph = createKnowledgeGraph
+export const buildGraph = buildKnowledgeGraph
+export const getSegments = listKnowledgeGraphSegments
+
+// ==================== 知识库检索配置 (V050 P2-E 混合检索可配) ====================
+
+/** 知识库检索配置 (后端 AiKnowledgeBase 混合检索字段子集) */
+export interface KbRetrievalConfig {
+  id?: string
+  kbCode?: string
+  kbName?: string
+  status?: string
+  hybridEnabled?: boolean
+  hybridVectorWeight?: number
+  hybridTopK?: number
+  hybridMinScore?: number
+}
+
+/** 查询知识库详情: GET /ai/knowledge-bases/{id} */
+export function getKnowledgeBase(id: string): Promise<KbRetrievalConfig> {
+  return service.get(`/ai/knowledge-bases/${id}`) as unknown as Promise<KbRetrievalConfig>
+}
+
+/** 更新检索配置 (ACTIVE 可直接调参实时生效): PATCH /ai/knowledge-bases/{id}/retrieval-config */
+export function updateRetrievalConfig(
+  id: string,
+  data: Partial<KbRetrievalConfig>,
+): Promise<KbRetrievalConfig> {
+  return service.patch(`/ai/knowledge-bases/${id}/retrieval-config`, data) as unknown as Promise<KbRetrievalConfig>
 }

@@ -66,6 +66,123 @@ public class OpenAiCompatibleAdapter implements LlmProviderAdapter {
     }
 
     @Override
+    public void stream(LlmRequest request,
+                       java.util.function.Consumer<String> onDelta,
+                       java.util.function.Consumer<StreamFinish> onFinish,
+                       java.util.function.Consumer<Throwable> onError) {
+        String endpoint = provider.getEndpoint();
+        if (endpoint == null || endpoint.isBlank()) {
+            onError.accept(new BusinessException(ErrorCode.SYS_PARAM_INVALID,
+                    "供应商 endpoint 不能为空: " + provider.getProviderCode()));
+            return;
+        }
+        if (containsPathVariable(endpoint)) {
+            onError.accept(new BusinessException(ErrorCode.SYS_PARAM_INVALID,
+                    "供应商 endpoint 包含未替换的路径变量，请先配置: " + provider.getProviderCode()));
+            return;
+        }
+        String url = buildUrl(endpoint, CHAT_COMPLETIONS_PATH);
+        String body = buildRequestBody(request, true);
+        log.debug("llm stream start: provider={} model={} url={} messageCount={}",
+                provider.getProviderCode(), request.model(), url, request.messages().size());
+        try {
+            long timeout = Math.max(resolveTimeoutMs(), 5L * 60 * 1000);
+            HttpClient client = HttpClient.newBuilder()
+                    .version(HttpClient.Version.HTTP_1_1)
+                    .connectTimeout(Duration.ofMillis(resolveTimeoutMs()))
+                    .build();
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofMillis(timeout))
+                    .header(HttpHeaders.CONTENT_TYPE, "application/json")
+                    .header(HttpHeaders.ACCEPT, "text/event-stream")
+                    .header(HttpHeaders.CACHE_CONTROL, "no-cache");
+            if (!apiKey.isBlank()) {
+                builder.header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
+            }
+            HttpRequest httpRequest = builder.POST(HttpRequest.BodyPublishers.ofString(body)).build();
+            java.net.http.HttpResponse<java.io.InputStream> resp =
+                    client.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
+            int status = resp.statusCode();
+            if (status != 200) {
+                String errBody;
+                try (java.io.InputStream is = resp.body()) {
+                    errBody = is == null ? "" : new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                }
+                onError.accept(new BusinessException(ErrorCode.AI_PROVIDER_ERROR,
+                        "LLM 流式返回非 200: " + status + " " + errBody));
+                return;
+            }
+            String finishReason = "stop";
+            int promptTokens = 0;
+            int completionTokens = 0;
+            boolean doneReceived = false;
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(resp.body(), java.nio.charset.StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.isBlank()) {
+                        continue;
+                    }
+                    if (!line.startsWith("data:")) {
+                        continue;
+                    }
+                    String data = line.substring(5).trim();
+                    if (data.isEmpty()) {
+                        continue;
+                    }
+                    if ("[DONE]".equals(data)) {
+                        doneReceived = true;
+                        break;
+                    }
+                    try {
+                        JsonNode root = objectMapper.readTree(data);
+                        JsonNode choices = root.path("choices");
+                        if (choices.isArray() && !choices.isEmpty()) {
+                            JsonNode first = choices.get(0);
+                            JsonNode delta = first.path("delta");
+                            String content = null;
+                            if (delta.isObject() && delta.has("content") && !delta.path("content").isNull()) {
+                                content = delta.path("content").asText(null);
+                            } else if (first.has("text")) {
+                                content = first.path("text").asText(null);
+                            } else if (first.path("message").has("content")) {
+                                content = first.path("message").path("content").asText(null);
+                            }
+                            if (content != null && !content.isEmpty()) {
+                                onDelta.accept(content);
+                            }
+                            String fr = first.path("finish_reason").asText(null);
+                            if (fr != null && !fr.isBlank() && !"null".equals(fr)) {
+                                finishReason = fr;
+                            }
+                        }
+                        JsonNode usage = root.path("usage");
+                        if (usage.isObject() && !usage.isMissingNode()) {
+                            promptTokens = usage.path("prompt_tokens").asInt(promptTokens);
+                            int ct = usage.path("completion_tokens").asInt(0);
+                            if (ct != 0) completionTokens = ct;
+                            int total = usage.path("total_tokens").asInt(0);
+                            if (promptTokens == 0 && total != 0 && completionTokens != 0) {
+                                promptTokens = total - completionTokens;
+                            }
+                        }
+                    } catch (Exception parseEx) {
+                        log.debug("llm stream chunk parse skip: provider={} data={} err={}",
+                                provider.getProviderCode(), data, parseEx.getMessage());
+                    }
+                }
+            }
+            if (!doneReceived) {
+                log.debug("llm stream finished without [DONE]: provider={}", provider.getProviderCode());
+            }
+            onFinish.accept(new StreamFinish(finishReason, promptTokens, completionTokens));
+        } catch (Exception e) {
+            onError.accept(e);
+        }
+    }
+
+    @Override
     public LlmResponse chat(LlmRequest request) {
         long startTime = System.currentTimeMillis();
         String endpoint = provider.getEndpoint();
@@ -126,6 +243,10 @@ public class OpenAiCompatibleAdapter implements LlmProviderAdapter {
     }
 
     private String buildRequestBody(LlmRequest request) {
+        return buildRequestBody(request, false);
+    }
+
+    private String buildRequestBody(LlmRequest request, boolean stream) {
         ObjectNode body = objectMapper.createObjectNode();
         body.put("model", request.model());
         List<LlmMessage> effectiveMessages = request.messages();
@@ -145,7 +266,9 @@ public class OpenAiCompatibleAdapter implements LlmProviderAdapter {
         for (LlmMessage message : effectiveMessages) {
             ObjectNode messageNode = messagesNode.addObject();
             messageNode.put("role", message.role());
-            messageNode.put("content", message.content());
+            // content 可能是 String（文本）或 List<Map>（多模态 parts）；
+            // 用 valueToTree 让 Jackson 按实际类型序列化，避免 ObjectNode.put 对 Object 走 POJO 路径
+            messageNode.set("content", objectMapper.valueToTree(message.content()));
         }
 
         body.put("temperature", request.temperature());
@@ -155,15 +278,22 @@ public class OpenAiCompatibleAdapter implements LlmProviderAdapter {
         } else if (request.maxTokens() != null && request.maxTokens() > 0) {
             body.put("max_tokens", request.maxTokens());
         }
-        body.put("stream", false);
+        body.put("stream", stream);
+        if (stream) {
+            body.put("stream_options", objectMapper.createObjectNode().put("include_usage", true));
+        }
         return body.toString();
     }
 
     private LlmMessage truncateIfNeeded(LlmMessage message) {
-        if (message.content().length() <= POLLINATIONS_ANONYMOUS_MAX_CONTENT_LENGTH) {
+        // 仅对纯文本 content 做截断；多模态 content 是 List 不能 substring，截断无意义
+        if (!(message.content() instanceof String text)) {
             return message;
         }
-        String truncated = message.content().substring(0, POLLINATIONS_ANONYMOUS_MAX_CONTENT_LENGTH)
+        if (text.length() <= POLLINATIONS_ANONYMOUS_MAX_CONTENT_LENGTH) {
+            return message;
+        }
+        String truncated = text.substring(0, POLLINATIONS_ANONYMOUS_MAX_CONTENT_LENGTH)
                 + POLLINATIONS_ANONYMOUS_TRUNCATION_SUFFIX;
         return new LlmMessage(message.role(), truncated);
     }
@@ -236,7 +366,8 @@ public class OpenAiCompatibleAdapter implements LlmProviderAdapter {
         }
         int total = 0;
         for (LlmMessage message : messages) {
-            total += estimateTokens(message.content());
+            // 多模态 content 是 List，只按 textContent() 折算 token
+            total += estimateTokens(message.textContent());
         }
         return total;
     }

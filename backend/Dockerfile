@@ -31,9 +31,9 @@ LABEL org.opencontainers.image.title="yutong-boot" \
       org.opencontainers.image.description="YuTong platform backend (single-jar)" \
       org.opencontainers.image.source="https://github.com/yutong/yutong-java-vue"
 
-# Create non-root user (uid 1000) + install wget for health check
+# Create non-root user (uid 1000) + install wget for health check + ffmpeg for drama compose (5-C)
 RUN groupadd -r yutong && useradd -r -g yutong -u 1001 -d /app -s /sbin/nologin yutong \
-    && apt-get update && apt-get install -y --no-install-recommends wget \
+    && apt-get update && apt-get install -y --no-install-recommends wget ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

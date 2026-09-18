@@ -89,5 +89,13 @@
     "knowledge.ops.msg.reindexConfirm": "确认重新索引该文档? 这将重新生成分块和向量",
     "knowledge.ops.msg.reindexConfirmTitle": "确认",
     "knowledge.ops.msg.reindexSubmitted": "重新索引请求已提交",
-    "knowledge.ops.msg.reindexFailed": "重新索引失败"
+    "knowledge.ops.msg.reindexFailed": "重新索引失败",
+    "knowledge.tuning.tab": "检索调参",
+    "knowledge.tuning.title": "混合检索参数 (实时生效)",
+    "knowledge.tuning.hint": "向量权重 + 全文权重 = 1。ACTIVE 知识库可直接调参, 下次检索即生效, 无需重新发布。",
+    "knowledge.tuning.field.hybridEnabled": "启用混合检索",
+    "knowledge.tuning.field.vectorWeight": "向量权重",
+    "knowledge.tuning.field.topK": "返回数量",
+    "knowledge.tuning.field.minScore": "准入门限",
+    "knowledge.tuning.hintWeight": "全文权重自动为 {text}"
 }

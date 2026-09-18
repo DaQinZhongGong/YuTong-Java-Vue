@@ -80,6 +80,34 @@ export function clearCache(cacheName: string): Promise<{
   }>
 }
 
+// ===== Redis INFO =====
+
+export interface RedisInfo {
+  usedMemory: number
+  usedMemoryRss: number
+  usedMemoryPeak: number
+  usedMemoryLua: number
+  maxMemory: number
+  maxMemoryPolicy: string
+  connectedClients: number
+  blockedClients: number
+  totalConnectionsReceived: number
+  totalCommandsProcessed: number
+  keyspaceHits: number
+  keyspaceMisses: number
+  expiredKeys: number
+  evictedKeys: number
+  dbs: Array<{ db: string; keys?: number; expires?: number }>
+  totalKeys: number
+  redisVersion: string
+  uptimeInSeconds: number
+}
+
+/** Redis INFO 详情: GET /monitor/cache/redis-info */
+export function getRedisInfo(): Promise<RedisInfo> {
+  return service.get('/monitor/cache/redis-info') as unknown as Promise<RedisInfo>
+}
+
 // ===== 聚合 Metrics =====
 
 export interface MetricsSnapshot {

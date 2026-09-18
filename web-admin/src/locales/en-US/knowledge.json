@@ -89,5 +89,13 @@
     "knowledge.ops.msg.reindexConfirm": "Confirm reindexing this document? This will regenerate chunks and vectors.",
     "knowledge.ops.msg.reindexConfirmTitle": "Confirm",
     "knowledge.ops.msg.reindexSubmitted": "Reindex request submitted",
-    "knowledge.ops.msg.reindexFailed": "Reindex failed"
+    "knowledge.ops.msg.reindexFailed": "Reindex failed",
+    "knowledge.tuning.tab": "Retrieval Tuning",
+    "knowledge.tuning.title": "Hybrid retrieval params (live)",
+    "knowledge.tuning.hint": "vector weight + text weight = 1. ACTIVE bases apply tuning on next retrieval, no republish needed.",
+    "knowledge.tuning.field.hybridEnabled": "Enable hybrid",
+    "knowledge.tuning.field.vectorWeight": "Vector weight",
+    "knowledge.tuning.field.topK": "Top K",
+    "knowledge.tuning.field.minScore": "Min score",
+    "knowledge.tuning.hintWeight": "Text weight auto = {text}"
 }

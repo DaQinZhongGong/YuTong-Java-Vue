@@ -7,7 +7,7 @@
  *   3. 成本治理 (2 端点: 分页/保存)
  *   4. 反馈闭环 (3 端点: 分页/提交/处理)
  *   5. RAG 评测 (5 端点: 样本集分页/运行分页/运行详情/触发运行/结果分页)
- *   6. 监控统计 (1 端点)
+ *   6. 监控统计 (2 端点: 治理统计 + 用量日报 M-2)
  */
 import service from './request'
 import type { PageResult } from './types'
@@ -378,4 +378,33 @@ export function pageAiEvalResults(
 // 6. 监控统计
 export function getAiGovernanceStats(): Promise<AiGovernanceStats> {
   return service.get(`${BASE}/stats`) as unknown as Promise<AiGovernanceStats>
+}
+
+// 6.1 用量日报 (M-2: P2-C Token 用量可视化, 数据源为调用后实时累计日行)
+export interface AiUsageDailyRow {
+  usageDate: string
+  quotaScope: string
+  scopeKey: string
+  modelCode: string
+  tokenUsed: number
+  costUsed: number
+}
+
+export interface AiUsageDaily {
+  rows: AiUsageDailyRow[]
+  totalTokens: number
+  totalCost: number
+  startDate: string
+  endDate: string
+}
+
+/** 用量日报查询: GET /ai-governance/usage/daily (需 ai:usage:list) */
+export function getAiUsageDaily(params: {
+  startDate?: string
+  endDate?: string
+  scope?: string
+  scopeKey?: string
+  modelCode?: string
+}): Promise<AiUsageDaily> {
+  return service.get(`${BASE}/usage/daily`, { params }) as unknown as Promise<AiUsageDaily>
 }

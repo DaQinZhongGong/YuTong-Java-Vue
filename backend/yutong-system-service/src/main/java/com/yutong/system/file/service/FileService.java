@@ -75,7 +75,9 @@ public class FileService {
             // 文本
             "txt", "csv", "json", "xml", "md", "log",
             // 压缩包（第一版允许，后续可按需收紧）
-            "zip", "tar", "gz"
+            "zip", "tar", "gz",
+            // 语音消息（移动端录音上传）
+            "mp3", "wav", "m4a", "aac", "webm", "ogg"
     );
 
     /** 日期路径格式 */

@@ -1,0 +1,62 @@
+/**
+ * YuTong Chat Tokens — 仅使用 --yt-* 变量，无硬编码 hex
+ * 依赖权威源: web-admin/src/styles/variables.css
+ */
+
+:root {
+  /* 气泡 */
+  --yt-chat-user-bg: var(--yt-color-primary);
+  --yt-chat-user-color: var(--yt-bg-card);
+  --yt-chat-assistant-bg: var(--yt-bg-card);
+  --yt-chat-assistant-border: var(--yt-border-default);
+  --yt-chat-assistant-color: var(--yt-text-primary);
+  --yt-chat-radius: var(--yt-radius-md);
+  --yt-chat-radius-tail: var(--yt-radius-sm);
+  --yt-chat-shadow: var(--yt-shadow-card);
+  --yt-chat-popover-shadow: var(--yt-shadow-popover);
+
+  /* 引用晶片 */
+  --yt-chat-citation-bg: var(--yt-color-primary-light-9);
+  --yt-chat-citation-border: var(--yt-color-primary-light-7);
+  --yt-chat-citation-color: var(--yt-color-primary-dark-2);
+
+  /* 尾脚 / 元信息 */
+  --yt-chat-footer-color: var(--yt-text-secondary);
+  --yt-chat-footer-size: var(--yt-font-size-caption);
+  --yt-chat-score-high: var(--yt-color-success);
+  --yt-chat-score-mid: var(--yt-color-primary);
+  --yt-chat-score-low: var(--yt-color-warning);
+  --yt-chat-error-bg: var(--yt-color-primary-light-9);
+  --yt-chat-error-border: var(--yt-border-light);
+
+  /* 输入栏 */
+  --yt-chat-input-bg: var(--yt-bg-card);
+  --yt-chat-input-border: var(--yt-border-light);
+}
+
+/* 布局基座（若未引入，ChatView / KnowledgeView 可复用） */
+.yt-chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yt-space-md);
+  padding: var(--yt-space-md) 0;
+  overflow-y: auto;
+}
+
+.yt-chat-input-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--yt-space-sm);
+  padding-top: var(--yt-space-md);
+  border-top: 1px solid var(--yt-chat-input-border);
+  background: var(--yt-chat-input-bg);
+}
+
+/* 滚动条 — 仅用 yt 令牌 */
+.yt-chat-list::-webkit-scrollbar {
+  width: 6px;
+}
+.yt-chat-list::-webkit-scrollbar-thumb {
+  background: var(--yt-border-default);
+  border-radius: var(--yt-radius-sm);
+}

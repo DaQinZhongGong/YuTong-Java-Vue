@@ -1,4 +1,5 @@
 packages:
+  - web
   - web-admin
   - mobile-uniapp
   - docs-site

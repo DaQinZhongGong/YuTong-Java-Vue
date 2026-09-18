@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
+import { Sender, Bubble } from 'vue-element-plus-x'
 import {
   AI_SCENARIO,
   AI_SCENARIO_OPTIONS,
@@ -24,6 +25,7 @@ import type {
   PageResult,
 } from '@/api/types'
 import { track } from '@/utils/tracker'
+import { estimateTokenCostCNY, formatCNY } from '@/utils/tokenCost'
 
 const { t } = useI18n()
 
@@ -65,6 +67,20 @@ const messages = ref<DisplayMessage[]>([])
 const inputMessage = ref('')
 const scenario = ref<string>(AI_SCENARIO.PLATFORM_QA)
 const chatContainer = ref<HTMLElement | null>(null)
+
+/** 本会话 token 用量累计 (来源: SSE done 事件 usage 字段) */
+const sessionTokenInput = ref(0)
+const sessionTokenOutput = ref(0)
+/** 会话 token 总数 (input + output) 用于 toolbar 角标展示 */
+const sessionTokenTotal = computed(() => sessionTokenInput.value + sessionTokenOutput.value)
+/** 会话累计成本 (CNY, 来源 tokenCost 静态价格表) */
+const sessionTokenCost = ref(0)
+/** 切换会话时重置累计 */
+function resetSessionTokenUsage() {
+  sessionTokenInput.value = 0
+  sessionTokenOutput.value = 0
+  sessionTokenCost.value = 0
+}
 
 /** 可用模型列表 */
 const models = ref<AiModelOption[]>([])
@@ -149,6 +165,7 @@ async function loadModels() {
 async function selectConversation(id: string) {
   currentConversationId.value = id
   messages.value = []
+  resetSessionTokenUsage()
   try {
     const list = await getMessages(id)
     // 解析每条消息的 citationJson 字段为 citations 数组, 并将 contentSummary 映射为 content (前端统一展示字段)
@@ -180,8 +197,8 @@ function parseCitations(raw?: string): AiCitation[] {
  * 设计来源: 13-AI能力设计 line 137-143/252
  * 事件序列: meta → (citation)* → (delta)+ → done | error
  */
-async function handleSend() {
-  const msg = inputMessage.value.trim()
+async function handleSend(val?: string) {
+  const msg = String(val ?? inputMessage.value ?? '').trim()
   if (!msg || sending.value) return
 
   sending.value = true
@@ -280,6 +297,20 @@ async function handleSend() {
           tokenInput = data.usage.inputTokens
           tokenOutput = data.usage.outputTokens
           latencyMs = data.usage.latencyMs
+          // 累计本会话 token 用量 (toolbar 角标展示)
+          sessionTokenInput.value += data.usage.inputTokens
+          sessionTokenOutput.value += data.usage.outputTokens
+          // 累计本会话成本 (优先用后端 8-C 推的 estimatedCost, 兜底用前端静态价格表)
+          const backendCost = parseBackendCost(data.usage.estimatedCost)
+          if (backendCost !== null) {
+            sessionTokenCost.value += backendCost
+          } else {
+            sessionTokenCost.value += estimateTokenCostCNY(
+              selectedModel.value?.modelCode,
+              data.usage.inputTokens,
+              data.usage.outputTokens
+            )
+          }
         },
         // error 事件: 流异常终止, 展示错误提示
         onError: (data: AiStreamErrorData) => {
@@ -462,6 +493,23 @@ function simpleHash(input: string): string {
   return `h_${h.toString(16)}`
 }
 
+/** Token 数格式化: 1234 -> "1.2K", 1500000 -> "1.5M" */
+function formatTokenCount(n: number): string {
+  if (n < 1000) return String(n)
+  if (n < 1_000_000) return (n / 1000).toFixed(1) + 'K'
+  return (n / 1_000_000).toFixed(2) + 'M'
+}
+
+/** 解析后端 8-C 推的 estimatedCost 字符串 -> 元 (number)
+ * 失败/空/0 兜底: 返回 null (由调用方决定是否走前端静态表)
+ */
+function parseBackendCost(cost: string | null | undefined): number | null {
+  if (!cost || cost === '0' || cost === '0.0') return null
+  const n = Number(cost)
+  if (!isFinite(n) || n <= 0) return null
+  return n
+}
+
 function scrollToBottom() {
   if (chatContainer.value) {
     chatContainer.value.scrollTop = chatContainer.value.scrollHeight
@@ -556,6 +604,26 @@ onUnmounted(() => {
           </el-tag>
         </div>
         <div class="toolbar-right">
+          <!-- P2-C: 本会话 Token 用量累计 (来源 SSE done 事件 usage 字段) -->
+          <el-tooltip
+            v-if="sessionTokenTotal > 0"
+            :content="`本会话累计 Token: 输入 ${sessionTokenInput} + 输出 ${sessionTokenOutput} = ${sessionTokenTotal}`"
+            placement="bottom"
+          >
+            <el-tag size="small" type="info" effect="plain" class="token-usage-badge" role="status" :aria-label="`本会话 Token 总量 ${sessionTokenTotal}`">
+              🪙 {{ formatTokenCount(sessionTokenTotal) }} tokens
+            </el-tag>
+          </el-tooltip>
+          <!-- P8-A: 本会话累计成本估算 (静态价格表) -->
+          <el-tooltip
+            v-if="sessionTokenCost > 0"
+            :content="`基于当前模型静态价格表估算 (生产建议改用后端 AiModelPriceResolver 动态价格)`"
+            placement="bottom"
+          >
+            <el-tag size="small" type="warning" effect="plain" class="token-cost-badge" role="status" :aria-label="`本会话累计成本 ${formatCNY(sessionTokenCost)}`">
+              💰 {{ formatCNY(sessionTokenCost) }}
+            </el-tag>
+          </el-tooltip>
           <el-button
             v-if="sending"
             type="danger"
@@ -581,10 +649,22 @@ onUnmounted(() => {
           class="msg-row"
           :class="msg.role === 'user' ? 'msg-user' : 'msg-ai'"
         >
-          <div class="msg-bubble" :aria-label="msg.role === 'user' ? $t('ai.chat.aria.myMessage') : $t('ai.chat.aria.aiReply')">
-            <div class="msg-content" v-html="renderContent(msg.content)" />
-            <!-- GA2-31: 流式输出时的打字光标 -->
-            <span v-if="msg.streaming" class="streaming-cursor" aria-hidden="true">▋</span>
+          <Bubble
+            :content="msg.content"
+            :placement="msg.role === 'user' ? 'end' : 'start'"
+            :shape="msg.role === 'user' ? 'corner' : 'round'"
+            :variant="msg.role === 'user' ? 'filled' : 'outlined'"
+            :is-markdown="msg.role !== 'user'"
+            :typing="msg.streaming"
+            :max-width="'720'"
+            :aria-label="msg.role === 'user' ? $t('ai.chat.aria.myMessage') : $t('ai.chat.aria.aiReply')"
+          >
+            <template #content>
+              <div class="msg-content" v-html="renderContent(msg.content)" />
+              <span v-if="msg.streaming" class="streaming-cursor" aria-hidden="true">▋</span>
+            </template>
+          </Bubble>
+          <div class="msg-bubble-extra">
 
             <!-- 引用来源 (citations) -->
             <div v-if="msg.citations && msg.citations.length > 0" class="citations">
@@ -665,27 +745,22 @@ onUnmounted(() => {
         </el-select>
       </div>
 
-      <!-- 输入区 -->
+      <!-- 输入区：vue-element-plus-x Sender，保留场景/模型/应用建议 -->
       <div class="chat-input">
-        <el-input
+        <Sender
           v-model="inputMessage"
-          type="textarea"
-          :rows="2"
-          :placeholder="$t('ai.chat.placeholder.inputMessage')"
-          :disabled="sending"
-          :aria-label="$t('ai.chat.aria.messageInput')"
-          @keydown.enter.exact.prevent="handleSend"
-          @keydown.ctrl.enter="handleSend"
-        />
-        <el-button
-          type="primary"
+          variant="updown"
+          :auto-size="{ minRows: 1, maxRows: 5 }"
+          allow-speech
+          clearable
           :loading="sending"
-          :disabled="!inputMessage.trim()"
-          @click="handleSend"
-          :aria-label="$t('ai.chat.aria.sendMessage')"
-        >
-          {{ $t('ai.assistant.action.chat') }}
-        </el-button>
+          :submitBtnDisabled="!inputMessage.trim()"
+          :placeholder="$t('ai.chat.placeholder.inputMessage')"
+          submitType="enter"
+          :style="{ '--el-color-primary': 'var(--yt-color-primary)' }"
+          @submit="handleSend"
+          @cancel="handleStop"
+        />
       </div>
     </el-card>
 
@@ -998,13 +1073,15 @@ onUnmounted(() => {
   background: #fafafa;
 }
 
+.msg-bubble-extra {
+  margin-top: 8px;
+  max-width: 720px;
+}
+
 .chat-input {
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--yt-border-light);
   padding: 12px;
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
-  background: #fff;
+  background: var(--yt-bg-card);
 }
 
 .chat-input :deep(.el-textarea) {

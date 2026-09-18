@@ -13,6 +13,11 @@
           "target": "http://localhost:20010",
           "changeOrigin": true,
           "secure": false
+        },
+        "/ws": {
+          "target": "ws://localhost:20010",
+          "ws": true,
+          "changeOrigin": true
         }
       }
     },

@@ -722,6 +722,15 @@ public class AiGovernanceApplicationService {
     // ==================== 6. 监控统计 ====================
 
     /**
+     * 用量日报查询 (日趋势)。设计来源: P2-C Token 用量可视化 (M-2)。
+     * 委托成本治理服务 (数据源为调用后实时累计的日行, 无需定时任务)。
+     */
+    public AiUsageDailyVO queryUsageDaily(LocalDate start, LocalDate end, String scope,
+                                           String scopeKey, String modelCode) {
+        return costGovernanceService.queryDailyUsage(start, end, scope, scopeKey, modelCode);
+    }
+
+    /**
      * 治理监控统计: 5 大能力域关键指标聚合, 供前端看板展示。
      */
     public AiGovernanceStatsVO getStats() {

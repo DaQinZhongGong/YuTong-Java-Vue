@@ -9,6 +9,8 @@ import com.yutong.common.auth.CurrentUserContext;
 import com.yutong.common.auth.DataScope;
 import com.yutong.common.auth.DataScopeType;
 import com.yutong.common.exception.BusinessConflictException;
+import com.yutong.common.exception.BusinessException;
+import com.yutong.common.errorcode.ErrorCode;
 import com.yutong.common.exception.ResourceNotFoundException;
 import com.yutong.common.id.IdGenerator;
 import com.yutong.common.response.PageRequest;
@@ -110,6 +112,43 @@ public class KnowledgeBaseApplicationService {
         if (rows == 0) {
             throw new BusinessConflictException("数据已被他人修改，请刷新后重试");
         }
+        return kb;
+    }
+
+    /**
+     * 更新检索配置 (V050 P2-E)。
+     * 与 saveDraft 不同：检索调参不改变知识库内容，无需走草稿/发布流，
+     * ACTIVE 库可直接调参并实时生效（下次检索即用新权重）。
+     * 范围校验失败 → 400；不存在 → 404。
+     */
+    @Transactional
+    public AiKnowledgeBase updateRetrievalConfig(String id, Boolean hybridEnabled,
+                                                java.math.BigDecimal hybridVectorWeight,
+                                                Integer hybridTopK,
+                                                java.math.BigDecimal hybridMinScore) {
+        AiKnowledgeBase kb = getKnowledgeBase(id);
+        if (hybridEnabled != null) kb.setHybridEnabled(hybridEnabled);
+        if (hybridVectorWeight != null) {
+            double w = hybridVectorWeight.doubleValue();
+            if (w < 0 || w > 1) {
+                throw new BusinessException(ErrorCode.SYS_PARAM_INVALID, "hybridVectorWeight 必须在 0~1 之间");
+            }
+            kb.setHybridVectorWeight(hybridVectorWeight);
+        }
+        if (hybridTopK != null) {
+            if (hybridTopK < 1 || hybridTopK > 50) {
+                throw new BusinessException(ErrorCode.SYS_PARAM_INVALID, "hybridTopK 必须在 1~50 之间");
+            }
+            kb.setHybridTopK(hybridTopK);
+        }
+        if (hybridMinScore != null) {
+            double m = hybridMinScore.doubleValue();
+            if (m < 0 || m > 1) {
+                throw new BusinessException(ErrorCode.SYS_PARAM_INVALID, "hybridMinScore 必须在 0~1 之间");
+            }
+            kb.setHybridMinScore(hybridMinScore);
+        }
+        kbMapper.updateById(kb);
         return kb;
     }
 

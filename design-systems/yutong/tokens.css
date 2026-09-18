@@ -1,0 +1,26 @@
+/* YuTong 雨桐 — Design Tokens (open-design compatible re-export)
+ * 权威源：web-admin/src/styles/variables.css (--yt-*)
+ * 本文件为可分发包的入口，复用权威源并补充 chart/兼容别名
+ */
+@import "../../web-admin/src/styles/variables.css";
+
+/* 补充：图表冷静配色（echarts 用），避免彩虹 */
+:root {
+  --yutong-chart-1: var(--yt-color-primary);
+  --yutong-chart-2: var(--yt-color-success);
+  --yutong-chart-3: var(--yt-color-info);
+  --yutong-chart-4: var(--yt-color-warning);
+  --yutong-chart-5: #8b7ab8;
+  --yutong-chart-6: #4a90a4;
+
+  /* 兼容：open-design 理念中的 yutong 命名指向 yt 权威 */
+  --yutong-primary: var(--yt-color-primary);
+  --yutong-accent: var(--yt-color-success);
+  --yutong-surface: var(--yt-bg-page);
+  --yutong-card: var(--yt-bg-card);
+  --yutong-text: var(--yt-text-primary);
+  --yutong-muted: var(--yt-text-secondary);
+  --yutong-border: var(--yt-border-default);
+  --yutong-radius: var(--yt-radius-md);
+  --yutong-shadow: var(--yt-shadow-card);
+}

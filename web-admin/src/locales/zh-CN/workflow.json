@@ -161,5 +161,9 @@
     "workflow.definition.bpmn.managerApproval": "部门经理审批",
     "workflow.definition.bpmn.amountCheck": "金额判断",
     "workflow.definition.bpmn.bossApproval": "总经理审批",
-    "workflow.definition.bpmn.end": "结束"
+    "workflow.definition.bpmn.end": "结束",
+    "workflow.error.definitionNotFound": "流程定义不存在",
+    "workflow.error.instanceCompleted": "流程实例已完成",
+    "workflow.error.permissionDenied": "无工作流操作权限",
+    "workflow.error.taskNotAssignee": "该任务不属于当前办理人"
 }

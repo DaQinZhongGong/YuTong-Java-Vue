@@ -1,6 +1,6 @@
-﻿# PowerShell 验收脚本：GA2-60 竞品对标验收
+# PowerShell 验收脚本：GA2-60 竞品对标验收
 # 对齐 38 号文档「竞品对标验收清单」8 大对标维度 + 11 维量化评分 + 差距关闭清单
-# 对标项目：RuoYi/RuoYiPlus/Yudao/JeecgBoot/Jeelowcode
+# 对标项目：业界同类实现/业界同类实现Plus/Yudao/JeecgBoot/Jeelowcode
 # 注意：本脚本必须保存为 UTF-8 BOM 编码，避免 PowerShell 5.1 中文 GBK 乱码
 # 使用：powershell -File tools/checks/check-competitive-benchmark.ps1
 

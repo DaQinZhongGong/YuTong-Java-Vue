@@ -13,7 +13,10 @@ import com.yutong.system.log.auditable.Auditable;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 /**
  * AI 治理接口。设计来源: 37-AI治理与评测设计 (GA2-45 v1.0)
@@ -247,6 +250,19 @@ public class AiGovernanceController {
     }
 
     // ==================== 6. 监控统计 ====================
+
+    @Operation(summary = "用量日报查询 (日趋势)", operationId = "getAiUsageDaily")
+    @RequiresPermission("ai:usage:list")
+    @GetMapping("/usage/daily")
+    public Result<AiUsageDailyVO> getUsageDaily(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String scope,
+            @RequestParam(required = false) String scopeKey,
+            @RequestParam(required = false) String modelCode) {
+        return Result.ok(service.queryUsageDaily(startDate, endDate, scope, scopeKey, modelCode),
+                TraceContext.getTraceId());
+    }
 
     @Operation(summary = "AI 治理监控统计", operationId = "getAiGovernanceStats")
     @RequiresPermission("ai:prompt:list")

@@ -118,6 +118,13 @@ yutong:
       heartbeat-fail-threshold: 3
       redis-channel: yutong:realtime:push
       allow-tenant-subscribe: true
+  # P2-A 多租户行级隔离。设计来源: ADR 0004 (YutongTenantLineHandler + TenantProperties)。
+  # ignore-tables 豁免全局共享表:
+  #   sys_tenant — 租户注册表 (平台级主数据, tenant:tenant:* 权限码守卫, V053)
+  #   sys_oss_config — OSS 配置表 (平台级配置, system:oss-config:* 权限码守卫, V054)
+  tenant:
+    interceptor-enabled: ${YUTONG_TENANT_INTERCEPTOR_ENABLED:true}
+    ignore-tables: ${YUTONG_TENANT_IGNORE_TABLES:sys_tenant,sys_oss_config}
   # GA2-L170: 商业授权模块开关。设计来源: 70-商业授权与版本能力裁剪详设「模块开关」
   # 规则: 模块开关只影响菜单、路由、接口访问和初始化数据，不允许在业务核心代码中散落 if/else。
   # 未配置的模块默认 true（Community 基础能力默认可用）。

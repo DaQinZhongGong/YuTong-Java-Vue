@@ -100,8 +100,8 @@ class AiProviderHealthServiceTest {
     }
 
     @Test
-    @DisplayName("mock-local 供应商直接返回 ok 且不发起网络请求")
-    void mockLocalSkippedWithoutProbe() throws Exception {
+    @DisplayName("mock-local 已退役：标记 unreachable 且不发起网络请求")
+    void mockLocalRejectedWithoutProbe() throws Exception {
         AiProviderHealthService service = service(10_000L, 60_000L);
         AiProvider mock = provider("mock-local", "Mock", 1, null);
         mock.setEndpoint(null);
@@ -109,8 +109,8 @@ class AiProviderHealthServiceTest {
 
         ProviderHealthResult result = service.checkProvider(mock);
 
-        assertTrue(result.reachable());
-        assertNull(result.errorMessage());
+        assertFalse(result.reachable());
+        assertTrue(result.errorMessage().contains("已退役"));
         verify(probe, never()).send(any(HttpRequest.class));
     }
 

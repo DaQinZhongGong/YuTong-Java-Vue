@@ -82,6 +82,13 @@
   --yt-transition-dialog: 190ms;   /* 弹窗打开 160~220ms */
   --yt-transition-highlight: 1200ms; /* 新增明细行高亮 1000~1500ms */
 
+  /* ===== 动效三档 Token (P2-K 微动效: 150/250/400ms + 标准 easing) ===== */
+  --yt-motion-fade: 150ms;    /* 路由切换 / 显隐淡入淡出 */
+  --yt-motion-slide: 250ms;   /* 列表 hover 上浮 / 抽屉位移 */
+  --yt-motion-scale: 400ms;   /* 卡片强调 / 加载 shimmer 周期基数 */
+  --yt-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --yt-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
   /* ===== Element Plus 主题桥接 (50号文档 line 337-339, 从 --yt-* 派生) ===== */
   --el-color-primary: var(--yt-color-primary);
   --el-color-success: var(--yt-color-success);
@@ -205,6 +212,30 @@ a {
   outline: 2px solid var(--yt-color-primary);
   outline-offset: 2px;
 }
+
+/* ===== P2-K 微动效工具类 (时长/曲线统一走 --yt-motion-*/--yt-ease-* 令牌) ===== */
+
+/* 列表项入场: 淡入 + 8px 上浮 (路由/分页/首屏用, animation 即触发一次) */
+@keyframes yt-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.yt-anim-fade-up { animation: yt-fade-up var(--yt-motion-slide, 250ms) var(--yt-ease-out, ease-out) both; }
+
+/* 骨架 shimmer: 加载占位 sweep (配合 el-skeleton 或自定义占位块用) */
+@keyframes yt-shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+.yt-shimmer {
+  background: linear-gradient(90deg, var(--yt-border-light) 25%, var(--yt-bg-card) 50%, var(--yt-border-light) 75%);
+  background-size: 200% 100%;
+  animation: yt-shimmer 1.2s linear infinite;
+}
+
+/* 可按压: 按钮/卡片点击态缩放 (纯 CSS, 无 JS) */
+.yt-pressable { transition: transform var(--yt-transition-click, 100ms) var(--yt-ease-out, ease-out); }
+.yt-pressable:active { transform: scale(0.97); }
 
 /* 减少动画 (WCAG 2.3.3 Animation from Interactions) */
 @media (prefers-reduced-motion: reduce) {

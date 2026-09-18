@@ -1,4 +1,4 @@
-﻿# GA2-L162: Sample Business Detail Machine Check Script
+# GA2-L162: Sample Business Detail Machine Check Script
 # Design source: 18-样例业务详细设计.md (DOC-PRD-004)
 # Verifies 18 doc's 4 acceptance criteria + 6 user stories + 5 states + 5 tables + 14 APIs + 6 pages + 8 tests
 # Output: build/reports/checks/sample-business-detail-ga2-l162.json + stdout summary
@@ -165,7 +165,7 @@ if ($criteriaHits -ge 4) {
 
 # SB-014: 4 benchmark values present
 $benchHits = 0
-foreach ($k in @('RuoYi', 'Yudao', 'JeecgBoot', 'PostgreSQL 字符串主键')) {
+foreach ($k in @('业界同类实现', 'Yudao', 'JeecgBoot', 'PostgreSQL 字符串主键')) {
     if ($designContent -match [regex]::Escape($k)) { $benchHits++ }
 }
 if ($benchHits -ge 4) {

@@ -41,6 +41,18 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true, title: '登录' },
   },
   {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/views/login/RegisterView.vue'),
+    meta: { public: true, title: '注册' },
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('@/views/login/ForgotPasswordView.vue'),
+    meta: { public: true, title: '找回密码' },
+  },
+  {
     path: '/403',
     name: 'Forbidden',
     component: () => import('@/views/error/ForbiddenView.vue'),
@@ -115,6 +127,18 @@ const routes: RouteRecordRaw[] = [
         name: 'Files',
         component: () => import('@/views/file/FileList.vue'),
         meta: { title: '文件管理', permissions: ['system:file:list'] },
+      },
+      {
+        path: 'system/oss-configs',
+        name: 'OssConfigs',
+        component: () => import('@/views/system/OssConfigList.vue'),
+        meta: { title: 'OSS 配置', permissions: ['system:oss-config:list'] },
+      },
+      {
+        path: 'monitor/online',
+        name: 'OnlineUsers',
+        component: () => import('@/views/system/OnlineUserList.vue'),
+        meta: { title: '在线用户', permissions: ['system:monitor:online'] },
       },
       {
         // GA2-34: 工单中心。设计来源: 35-样例业务矩阵扩展设计 P1 工单中心
@@ -271,6 +295,28 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '供应商管理', permissions: ['ai:assistant:use'], licenseRequired: 'ai' },
       },
       {
+        // M-2: 用量统计 (后端 /ai-governance/usage/daily, ai:usage:list; 菜单沿用 AI 模块可见码)
+        path: 'ai/usage',
+        name: 'AiUsage',
+        component: () => import('@/views/ai/AiUsage.vue'),
+        meta: { title: '用量统计', permissions: ['ai:assistant:use'], licenseRequired: 'ai' },
+      },
+      {
+        // AI 链路追踪-时间线视图。设计来源: V043 ai_trace_run/ai_trace_node — 前端时间线视图
+        // 后端 AiTraceController 提供 6 接口, 前端封装于 @/api/trace.ts
+        path: 'trace',
+        name: 'AiTrace',
+        component: () => import('@/views/trace/AiTraceList.vue'),
+        meta: { title: 'AI 链路追踪', permissions: ['ai:assistant:use'], licenseRequired: 'ai' },
+      },
+      {
+        // M-3: 调用监控大盘 (后端 /ai/trace/dashboard, ai:trace:list; 菜单沿用 AI 模块可见码)
+        path: 'trace/dashboard',
+        name: 'AiTraceDashboard',
+        component: () => import('@/views/trace/AiTraceDashboard.vue'),
+        meta: { title: '调用监控', permissions: ['ai:assistant:use'], licenseRequired: 'ai' },
+      },
+      {
         // GA2-45: AI 治理与评测。设计来源: 37-AI治理与评测设计
         // 5 大能力域: Prompt 治理 / AI 工具注册 / 成本治理 / 反馈闭环 / RAG 评测
         // 复用 system:todo:list 权限码 (与 GA2-40~44 一致, 全角色可见)
@@ -394,6 +440,32 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/dict/DictItemView.vue'),
         meta: { title: '字典项', permissions: ['system:dict-item:list'] },
       },
+      // P2-F 批次 6: CMS / 租户套餐 / OAuth 客户端 (后端 6-A/6-B/6-C + V047 迁移)
+      {
+        path: 'system/cms-contents',
+        name: 'CmsContents',
+        component: () => import('@/views/system/CmsContentList.vue'),
+        meta: { title: '内容管理', permissions: ['cms:content:list'] },
+      },
+      {
+        path: 'system/tenant-packages',
+        name: 'TenantPackages',
+        component: () => import('@/views/system/TenantPackageList.vue'),
+        meta: { title: '租户套餐', permissions: ['tenant:package:list'] },
+      },
+      // P2-F 租户列表: sys_tenant 注册表 (后端 SysTenantController + V053 迁移)
+      {
+        path: 'system/tenants',
+        name: 'Tenants',
+        component: () => import('@/views/system/TenantList.vue'),
+        meta: { title: '租户管理', permissions: ['tenant:tenant:list'] },
+      },
+      {
+        path: 'system/oauth-clients',
+        name: 'OAuthClients',
+        component: () => import('@/views/system/OAuthClientList.vue'),
+        meta: { title: 'OAuth 客户端', permissions: ['auth:client:list'] },
+      },
       {
         // ADR-002: 对齐 routes.yaml 契约 web.system.dict-items
         // 契约要求 /system/dict-types/:dictType/items（带 path 参数 dictType）
@@ -402,6 +474,76 @@ const routes: RouteRecordRaw[] = [
         name: 'DictItemsByType',
         component: () => import('@/views/dict/DictItemView.vue'),
         meta: { title: '字典项', permissions: ['system:dict-item:list'] },
+      },
+      // Phase 6: 双端扩展 — MCP/技能/Agent/AI Flow
+      {
+        path: 'mcp',
+        name: 'McpMarket',
+        component: () => import('@/views/mcp/McpMarket.vue'),
+        meta: { title: 'MCP 广场', permissions: ['system:config:list'], licenseRequired: 'ai' },
+      },
+      {
+        path: 'skill',
+        name: 'SkillMarket',
+        component: () => import('@/views/skill/SkillMarket.vue'),
+        meta: { title: '技能市场', permissions: ['system:config:list'], licenseRequired: 'ai' },
+      },
+      {
+        path: 'agent',
+        name: 'AgentList',
+        component: () => import('@/views/agent/AgentList.vue'),
+        meta: { title: 'Agent 列表', permissions: ['ai:assistant:use'], licenseRequired: 'ai' },
+      },
+      {
+        path: 'aiflow',
+        name: 'AiflowDesigner',
+        component: () => import('@/views/aiflow/AiflowDesigner.vue'),
+        meta: { title: 'AI Flow 设计器', permissions: ['ai:assistant:use'], licenseRequired: 'ai' },
+      },
+      {
+        path: 'ai/memories',
+        name: 'AiMemoryList',
+        component: () => import('@/views/memory/AiMemoryList.vue'),
+        meta: { title: '记忆管理', permissions: ['ai:assistant:use'], licenseRequired: 'ai' },
+      },
+      {
+        path: 'ai/media',
+        name: 'MediaJobList',
+        component: () => import('@/views/media/MediaJobList.vue'),
+        meta: { title: '多模态生成', permissions: ['ai:assistant:use'], licenseRequired: 'ai' },
+      },
+      {
+        path: 'ai/copilot',
+        name: 'CopilotDraft',
+        component: () => import('@/views/copilot/CopilotDraft.vue'),
+        meta: { title: 'Copilot 草稿', permissions: ['ai:assistant:use'], licenseRequired: 'ai' },
+      },
+      // platform-remaining-parity S2.1: Coding Harness 工作台 (会话/Run/审批/SSE)
+      {
+        path: 'copilot/harness',
+        name: 'HarnessWorkbench',
+        component: () => import('@/views/copilot/HarnessWorkbench.vue'),
+        meta: { title: 'Coding Harness', permissions: ['ai:assistant:use'], licenseRequired: 'ai' },
+      },
+      {
+        path: 'drama',
+        name: 'DramaList',
+        component: () => import('@/views/drama/DramaList.vue'),
+        meta: { title: '短剧管理', permissions: ['system:config:list'] },
+      },
+      // P2-D 批次 5-C: 短剧真机合成 (ffmpeg 执行 + 任务轮询)
+      {
+        path: 'drama/compose',
+        name: 'DramaCompose',
+        component: () => import('@/views/drama/DramaCompose.vue'),
+        meta: { title: '短剧合成', permissions: ['ai:assistant:use'], licenseRequired: 'ai' },
+      },
+      // platform-remaining-parity S2.2: 分镜视频工作室 (项目/分镜/单镜批量/合成)
+      {
+        path: 'drama/storyboard',
+        name: 'StoryboardStudio',
+        component: () => import('@/views/drama/StoryboardStudio.vue'),
+        meta: { title: '分镜视频', permissions: ['ai:assistant:use'], licenseRequired: 'ai' },
       },
       // GA2-15: 平台基础能力补齐 — 参数配置/操作日志/任务日志/导入导出任务
       // GA2-16: 路由 meta.permissions 对齐 96 号文档权限矩阵

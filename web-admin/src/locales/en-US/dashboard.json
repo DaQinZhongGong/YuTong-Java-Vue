@@ -150,5 +150,11 @@
     "dashboard.statCard.submitted":  "Submitted",
     "dashboard.statCard.approved":  "Approved",
     "dashboard.statCard.unreadMessages":  "Unread messages",
-    "dashboard.fullscreen.chartNoDataSuffix":  " (No data)"
+    "dashboard.fullscreen.chartNoDataSuffix":  " (No data)",
+    "dashboard.error.codeDuplicate":  "Code already exists",
+    "dashboard.error.notFound":  "Report not found",
+    "dashboard.error.statusNotAllowed":  "Operation not allowed in current status",
+    "dashboard.error.internal":  "Report service internal error",
+    "dashboard.report.error.notFound":  "Report not found",
+    "dashboard.widget.error.notFound":  "Widget not found"
 }

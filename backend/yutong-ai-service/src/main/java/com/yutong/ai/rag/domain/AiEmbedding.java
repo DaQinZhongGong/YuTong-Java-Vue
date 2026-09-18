@@ -28,4 +28,7 @@ public class AiEmbedding extends BaseEntity {
 
     /** 向量哈希，用于去重 */
     private String embeddingHash;
+
+    /** 向量模态: text / image / video / audio (V061 多模态 Embedding，默认 text) */
+    private String modality = "text";
 }

@@ -1,5 +1,6 @@
 package com.yutong.ai.rag.domain;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.yutong.infra.persistence.BaseEntity;
 import lombok.Getter;
@@ -63,4 +64,26 @@ public class AiDocument extends BaseEntity {
 
     /** 索引完成时间 */
     private OffsetDateTime indexedTime;
+
+    // ===== V037 RAG parity 扩展 (文档级覆盖知识库默认值) =====
+
+    /** 切分参数 JSON 覆盖 (NULL 继承知识库) */
+    @TableField("chunk_params_json")
+    private String chunkParamsJson;
+
+    /** 装载器类型覆盖 */
+    @TableField("loader_type")
+    private String loaderType;
+
+    /** 重排开关覆盖 */
+    @TableField("reranker_enabled")
+    private Boolean rerankerEnabled;
+
+    /** 重排供应商覆盖 */
+    @TableField("reranker_provider")
+    private String rerankerProvider;
+
+    /** 混合检索开关覆盖 */
+    @TableField("hybrid_enabled")
+    private Boolean hybridEnabled;
 }

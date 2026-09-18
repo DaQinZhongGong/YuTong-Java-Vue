@@ -1,4 +1,4 @@
-﻿# local profile: 本地开发，使用 Docker Compose 依赖
+# local profile: 本地开发，使用 Docker Compose 依赖
 spring:
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:20000}/${POSTGRES_DB:yutong}?stringtype=unspecified

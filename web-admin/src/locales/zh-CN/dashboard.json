@@ -150,5 +150,11 @@
     "dashboard.statCard.submitted":  "已提交",
     "dashboard.statCard.approved":  "已批准",
     "dashboard.statCard.unreadMessages":  "未读消息",
-    "dashboard.fullscreen.chartNoDataSuffix":  " (无数据)"
+    "dashboard.fullscreen.chartNoDataSuffix":  " (无数据)",
+    "dashboard.error.codeDuplicate":  "编码已存在",
+    "dashboard.error.notFound":  "报表不存在",
+    "dashboard.error.statusNotAllowed":  "当前状态不允许该操作",
+    "dashboard.error.internal":  "报表服务内部错误",
+    "dashboard.report.error.notFound":  "报表不存在",
+    "dashboard.widget.error.notFound":  "组件不存在"
 }

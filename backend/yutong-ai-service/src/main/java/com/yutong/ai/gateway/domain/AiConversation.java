@@ -1,5 +1,6 @@
 package com.yutong.ai.gateway.domain;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.yutong.infra.persistence.BaseEntity;
 import lombok.Getter;
@@ -42,4 +43,18 @@ public class AiConversation extends BaseEntity {
 
     /** 最后消息时间 */
     private OffsetDateTime lastMessageTime;
+
+    /** 记忆配置 JSON: {windowSize, summarizeThreshold} (V039) */
+    @TableField("memory_config_json")
+    private String memoryConfigJson;
+
+    /** 会话摘要 (超过阈值时 LLM 总结) (V039) */
+    private String summary;
+
+    /** 记忆窗口大小 (默认 10) (V039) */
+    @TableField("memory_window")
+    private Integer memoryWindow;
+
+    /** 置顶 (true 排在列表前面) (V049 P2-C 会话管理) */
+    private Boolean pinned;
 }

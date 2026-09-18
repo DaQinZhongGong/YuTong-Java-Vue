@@ -25,6 +25,12 @@ public class AiStreamDoneData {
     /** 是否需要人工确认（涉及工具调用且风险等级 >= A2 时为 true） */
     private boolean requiresHumanConfirmation;
 
+    /**
+     * 本次 assistant 回复的消息 ID (V049 P2-C, 前端据此挂载点赞/点踩, 可空保持兼容)。
+     * 注意 @AllArgsConstructor 参数顺序: (usage, requiresHumanConfirmation, messageId)。
+     */
+    private String messageId;
+
     /** token 用量内部对象，对齐 openapi.yaml AiUsageVO */
     @Getter
     @Setter
